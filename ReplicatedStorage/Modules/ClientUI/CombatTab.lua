@@ -1,10 +1,9 @@
 -- @ScriptType: ModuleScript
--- @ScriptType: ModuleScript
 local CombatTab = { UI = {} }
 local task = task
 
 function CombatTab.Build(frame, CombatEvent, playerData, factionData, GameConfig)
-	CombatTab.UI.WardBtn = Instance.new("TextButton"); CombatTab.UI.WardBtn.Size = UDim2.new(0.5, 0, 0, 50); CombatTab.UI.WardBtn.Position = UDim2.new(0.25, 0, 0.28, 0); CombatTab.UI.WardBtn.Font = Enum.Font.GothamBold; CombatTab.UI.WardBtn.TextSize = 22; CombatTab.UI.WardBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60); CombatTab.UI.WardBtn.TextColor3 = Color3.fromRGB(200, 200, 255); CombatTab.UI.WardBtn.Text = "Current Patrol: 20th Ward"; CombatTab.UI.WardBtn.Parent = frame
+	CombatTab.UI.WardBtn = Instance.new("TextButton"); CombatTab.UI.WardBtn.Size = UDim2.new(0.6, 0, 0, 50); CombatTab.UI.WardBtn.Position = UDim2.new(0.2, 0, 0.28, 0); CombatTab.UI.WardBtn.Font = Enum.Font.GothamBold; CombatTab.UI.WardBtn.TextSize = 16; CombatTab.UI.WardBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60); CombatTab.UI.WardBtn.TextColor3 = Color3.fromRGB(200, 200, 255); CombatTab.UI.WardBtn.Text = "Current Patrol: 20th Ward"; CombatTab.UI.WardBtn.Parent = frame
 	CombatTab.UI.SearchBtn = Instance.new("TextButton"); CombatTab.UI.SearchBtn.Size = UDim2.new(0.5, 0, 0, 80); CombatTab.UI.SearchBtn.Position = UDim2.new(0.25, 0, 0.45, 0); CombatTab.UI.SearchBtn.Text = "Search for Enemies"; CombatTab.UI.SearchBtn.Font = Enum.Font.GothamBold; CombatTab.UI.SearchBtn.TextSize = 28; CombatTab.UI.SearchBtn.BackgroundColor3 = Color3.fromRGB(150, 50, 50); CombatTab.UI.SearchBtn.TextColor3 = Color3.fromRGB(255, 255, 255); CombatTab.UI.SearchBtn.Parent = frame
 
 	CombatTab.UI.MapPanel = Instance.new("ScrollingFrame"); CombatTab.UI.MapPanel.Size = UDim2.new(0.8, 0, 0.6, 0); CombatTab.UI.MapPanel.Position = UDim2.new(0.1, 0, 0.2, 0); CombatTab.UI.MapPanel.BackgroundColor3 = Color3.fromRGB(20, 20, 25); CombatTab.UI.MapPanel.AutomaticCanvasSize = Enum.AutomaticSize.Y; CombatTab.UI.MapPanel.CanvasSize = UDim2.new(0, 0, 0, 0); CombatTab.UI.MapPanel.ScrollBarThickness = 8; CombatTab.UI.MapPanel.Visible = false; CombatTab.UI.MapPanel.ZIndex = 50; CombatTab.UI.MapPanel.Parent = frame
@@ -30,14 +29,36 @@ function CombatTab.Build(frame, CombatEvent, playerData, factionData, GameConfig
 		local wardVal = dynWards:FindFirstChild(w.Key)
 		local function updateBtnText()
 			local risk = wardVal and wardVal.Value or 1
-			btn.Text = w.Data.Name .. " (Risk: " .. string.format("%.1fx", risk) .. ")"
+
+			local ccgKills = wardVal and wardVal:FindFirstChild("CCGKills")
+			local ghoulKills = wardVal and wardVal:FindFirstChild("GhoulKills")
+			local cKills = ccgKills and ccgKills.Value or 0
+			local gKills = ghoulKills and ghoulKills.Value or 0
+
+			local fac = factionData.Value
+			local progStr = ""
+			if fac == "CCG" then
+				progStr = " | Securing: " .. cKills .. "/" .. GameConfig.WardKillsToShift
+			elseif fac == "GHOUL" then
+				progStr = " | Terror: " .. gKills .. "/" .. GameConfig.WardKillsToShift
+			end
+
+			btn.Text = w.Data.Name .. " (Risk: " .. string.format("%.1fx", risk) .. ")" .. progStr
+
 			local alpha = math.clamp((risk - 1) / 4, 0, 1)
 			local r = math.floor(50 + (150 * alpha))
 			local g = math.floor(200 - (150 * alpha))
 			local b = 50
 			btn.BackgroundColor3 = Color3.fromRGB(r, g, b)
 		end
-		if wardVal then wardVal.Changed:Connect(updateBtnText) end
+
+		if wardVal then 
+			wardVal.Changed:Connect(updateBtnText) 
+			local cKills = wardVal:FindFirstChild("CCGKills")
+			if cKills then cKills.Changed:Connect(updateBtnText) end
+			local gKills = wardVal:FindFirstChild("GhoulKills")
+			if gKills then gKills.Changed:Connect(updateBtnText) end
+		end
 		updateBtnText()
 
 		btn.MouseButton1Click:Connect(function()
@@ -62,20 +83,39 @@ function CombatTab.Build(frame, CombatEvent, playerData, factionData, GameConfig
 		local baseData = GameConfig.Wards[wName]
 		local val = dynWards and dynWards:FindFirstChild(wName)
 		local risk = val and val.Value or 1
-		CombatTab.UI.WardBtn.Text = "Current Patrol: " .. (baseData and baseData.Name or wName) .. " (Risk: " .. string.format("%.1fx", risk) .. ")"
+
+		local ccgKills = val and val:FindFirstChild("CCGKills")
+		local ghoulKills = val and val:FindFirstChild("GhoulKills")
+		local cKills = ccgKills and ccgKills.Value or 0
+		local gKills = ghoulKills and ghoulKills.Value or 0
+
+		local fac = factionData.Value
+		local progStr = ""
+		if fac == "CCG" then
+			progStr = " | Securing: " .. cKills .. "/" .. GameConfig.WardKillsToShift
+		elseif fac == "GHOUL" then
+			progStr = " | Terror: " .. gKills .. "/" .. GameConfig.WardKillsToShift
+		end
+
+		local timerStr = ""
+		local tickVal = dynWards and dynWards:FindFirstChild("NextRiskIncrease")
+		if tickVal then
+			local timeLeft = math.max(0, tickVal.Value - os.time())
+			local m = math.floor(timeLeft / 60)
+			local s = timeLeft % 60
+			timerStr = string.format(" | +0.1x in %02d:%02d", m, s)
+		end
+
+		CombatTab.UI.WardBtn.Text = "Current Patrol: " .. (baseData and baseData.Name or wName) .. " (Risk: " .. string.format("%.1fx", risk) .. ")" .. progStr .. timerStr
 	end
 
 	task.spawn(function()
-		local wardStat = playerData:WaitForChild("PatrolWard")
-		wardStat.Changed:Connect(updateWardBtnTxt)
-		for _, child in ipairs(dynWards:GetChildren()) do
-			child.Changed:Connect(function()
-				if playerData:FindFirstChild("PatrolWard") and playerData.PatrolWard.Value == child.Name then
-					updateWardBtnTxt()
-				end
-			end)
+		while true do
+			task.wait(1)
+			if CombatTab.UI.WardBtn.Visible then
+				updateWardBtnTxt()
+			end
 		end
-		updateWardBtnTxt()
 	end)
 
 	task.spawn(function()
