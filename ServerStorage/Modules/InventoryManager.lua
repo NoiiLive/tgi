@@ -1,4 +1,5 @@
 -- @ScriptType: ModuleScript
+-- @ScriptType: ModuleScript
 local InventoryManager = {}
 local HttpService = game:GetService("HttpService")
 local GameConfig, DataManager, ShopManager, Network
@@ -28,7 +29,13 @@ function InventoryManager.Init(params)
 				local dur = math.max(10, wDef * 5)
 				if string.find(kData.Type, "-") then dur = dur * 2 end
 
-				local qData = { ItemType = "Quinque", Name = randName, Type = kData.Type, Weapon = wType, Str = math.floor(kData.Str * 0.5), Spd = math.floor(kData.Spd * 0.5), Mutation = kData.Mutation, Durability = dur, MaxDurability = dur, Broken = false }
+				local mult = (kData.Name == "Kakuja Kakuhou") and 1.5 or 0.5
+				local qData = { ItemType = "Quinque", Name = randName, Type = kData.Type, Weapon = wType, Str = math.floor(kData.Str * mult), Spd = math.floor(kData.Spd * mult), Mutation = kData.Mutation, Durability = dur, MaxDurability = dur, Broken = false }
+
+				if kData.Name == "Kakuja Kakuhou" then
+					qData.Name = "Kakuja " .. qData.Name
+				end
+
 				DataManager.GiveItem(player, qData); targetItem:Destroy(); Network.notify(player, "Crafted " .. qData.Name .. "!", Color3.fromRGB(50, 150, 255))
 			end
 
