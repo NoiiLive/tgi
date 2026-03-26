@@ -1,10 +1,51 @@
 -- @ScriptType: ModuleScript
+-- @ScriptType: ModuleScript
 local CombatTab = { UI = {} }
 local task = task
 
 function CombatTab.Build(frame, CombatEvent, playerData, factionData, GameConfig)
-	CombatTab.UI.WardBtn = Instance.new("TextButton"); CombatTab.UI.WardBtn.Size = UDim2.new(0.5, 0, 0, 50); CombatTab.UI.WardBtn.Position = UDim2.new(0.25, 0, 0.28, 0); CombatTab.UI.WardBtn.Font = Enum.Font.GothamBold; CombatTab.UI.WardBtn.TextSize = 22; CombatTab.UI.WardBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60); CombatTab.UI.WardBtn.TextColor3 = Color3.fromRGB(200, 200, 255); CombatTab.UI.WardBtn.Text = "Current Patrol: 20th Ward (Low Risk)"; CombatTab.UI.WardBtn.Parent = frame
+	CombatTab.UI.WardBtn = Instance.new("TextButton"); CombatTab.UI.WardBtn.Size = UDim2.new(0.5, 0, 0, 50); CombatTab.UI.WardBtn.Position = UDim2.new(0.25, 0, 0.28, 0); CombatTab.UI.WardBtn.Font = Enum.Font.GothamBold; CombatTab.UI.WardBtn.TextSize = 22; CombatTab.UI.WardBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60); CombatTab.UI.WardBtn.TextColor3 = Color3.fromRGB(200, 200, 255); CombatTab.UI.WardBtn.Text = "Current Patrol: 20th Ward"; CombatTab.UI.WardBtn.Parent = frame
 	CombatTab.UI.SearchBtn = Instance.new("TextButton"); CombatTab.UI.SearchBtn.Size = UDim2.new(0.5, 0, 0, 80); CombatTab.UI.SearchBtn.Position = UDim2.new(0.25, 0, 0.45, 0); CombatTab.UI.SearchBtn.Text = "Search for Enemies"; CombatTab.UI.SearchBtn.Font = Enum.Font.GothamBold; CombatTab.UI.SearchBtn.TextSize = 28; CombatTab.UI.SearchBtn.BackgroundColor3 = Color3.fromRGB(150, 50, 50); CombatTab.UI.SearchBtn.TextColor3 = Color3.fromRGB(255, 255, 255); CombatTab.UI.SearchBtn.Parent = frame
+
+	CombatTab.UI.MapPanel = Instance.new("ScrollingFrame"); CombatTab.UI.MapPanel.Size = UDim2.new(0.8, 0, 0.6, 0); CombatTab.UI.MapPanel.Position = UDim2.new(0.1, 0, 0.2, 0); CombatTab.UI.MapPanel.BackgroundColor3 = Color3.fromRGB(20, 20, 25); CombatTab.UI.MapPanel.AutomaticCanvasSize = Enum.AutomaticSize.Y; CombatTab.UI.MapPanel.CanvasSize = UDim2.new(0, 0, 0, 0); CombatTab.UI.MapPanel.ScrollBarThickness = 8; CombatTab.UI.MapPanel.Visible = false; CombatTab.UI.MapPanel.ZIndex = 50; CombatTab.UI.MapPanel.Parent = frame
+
+	local listLayout = Instance.new("UIListLayout", CombatTab.UI.MapPanel); listLayout.Padding = UDim.new(0, 10); listLayout.SortOrder = Enum.SortOrder.LayoutOrder; listLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	local topPadding = Instance.new("UIPadding", CombatTab.UI.MapPanel); topPadding.PaddingTop = UDim.new(0, 10); topPadding.PaddingBottom = UDim.new(0, 10)
+
+	local closeMapBtn = Instance.new("TextButton"); closeMapBtn.Size = UDim2.new(0.95, 0, 0, 50); closeMapBtn.Text = "Close Map"; closeMapBtn.Font = Enum.Font.GothamBold; closeMapBtn.TextSize = 20; closeMapBtn.BackgroundColor3 = Color3.fromRGB(150, 50, 50); closeMapBtn.TextColor3 = Color3.fromRGB(255, 255, 255); closeMapBtn.LayoutOrder = -1; closeMapBtn.ZIndex = 51; closeMapBtn.Parent = CombatTab.UI.MapPanel
+	closeMapBtn.MouseButton1Click:Connect(function() CombatTab.UI.MapPanel.Visible = false; CombatTab.UI.WardBtn.Visible = true; CombatTab.UI.SearchBtn.Visible = true end)
+
+	local sortedWards = {}
+	for key, data in pairs(GameConfig.Wards) do
+		local num = tonumber(string.match(key, "%d+")) or 99
+		table.insert(sortedWards, {Key = key, Data = data, Num = num})
+	end
+	table.sort(sortedWards, function(a, b) return a.Num < b.Num end)
+
+	local dynWards = game:GetService("ReplicatedStorage"):WaitForChild("DynamicWards")
+
+	for i, w in ipairs(sortedWards) do
+		local btn = Instance.new("TextButton"); btn.Size = UDim2.new(0.95, 0, 0, 50); btn.Font = Enum.Font.GothamBold; btn.TextSize = 18; btn.TextColor3 = Color3.fromRGB(255, 255, 255); btn.LayoutOrder = i; btn.ZIndex = 51; btn.Parent = CombatTab.UI.MapPanel
+
+		local wardVal = dynWards:FindFirstChild(w.Key)
+		local function updateBtnText()
+			local risk = wardVal and wardVal.Value or 1
+			btn.Text = w.Data.Name .. " (Risk: " .. string.format("%.1fx", risk) .. ")"
+			local alpha = math.clamp((risk - 1) / 4, 0, 1)
+			local r = math.floor(50 + (150 * alpha))
+			local g = math.floor(200 - (150 * alpha))
+			local b = 50
+			btn.BackgroundColor3 = Color3.fromRGB(r, g, b)
+		end
+		if wardVal then wardVal.Changed:Connect(updateBtnText) end
+		updateBtnText()
+
+		btn.MouseButton1Click:Connect(function()
+			CombatEvent:FireServer("ChangeWard", w.Key)
+			CombatTab.UI.MapPanel.Visible = false; CombatTab.UI.WardBtn.Visible = true; CombatTab.UI.SearchBtn.Visible = true
+		end)
+	end
+
 	CombatTab.UI.BattleArena = Instance.new("Frame"); CombatTab.UI.BattleArena.Size = UDim2.new(0.9, 0, 0.8, 0); CombatTab.UI.BattleArena.Position = UDim2.new(0.05, 0, 0.15, 0); CombatTab.UI.BattleArena.BackgroundTransparency = 1; CombatTab.UI.BattleArena.Visible = false; CombatTab.UI.BattleArena.Parent = frame
 	CombatTab.UI.EnemyLabel = Instance.new("TextLabel"); CombatTab.UI.EnemyLabel.Size = UDim2.new(1, 0, 0, 50); CombatTab.UI.EnemyLabel.Font = Enum.Font.GothamBlack; CombatTab.UI.EnemyLabel.TextSize = 30; CombatTab.UI.EnemyLabel.TextColor3 = Color3.fromRGB(255, 100, 100); CombatTab.UI.EnemyLabel.BackgroundTransparency = 1; CombatTab.UI.EnemyLabel.Parent = CombatTab.UI.BattleArena
 	CombatTab.UI.CombatLog = Instance.new("ScrollingFrame"); CombatTab.UI.CombatLog.Size = UDim2.new(1, 0, 0.55, 0); CombatTab.UI.CombatLog.Position = UDim2.new(0, 0, 0.15, 0); CombatTab.UI.CombatLog.BackgroundColor3 = Color3.fromRGB(20, 20, 20); CombatTab.UI.CombatLog.AutomaticCanvasSize = Enum.AutomaticSize.Y; CombatTab.UI.CombatLog.CanvasSize = UDim2.new(0, 0, 0, 0); CombatTab.UI.CombatLog.ScrollBarThickness = 8; Instance.new("UIListLayout", CombatTab.UI.CombatLog).Parent = CombatTab.UI.CombatLog; CombatTab.UI.CombatLog.Parent = CombatTab.UI.BattleArena
@@ -14,13 +55,27 @@ function CombatTab.Build(frame, CombatEvent, playerData, factionData, GameConfig
 	CombatTab.UI.EatFleshBtn = Instance.new("TextButton"); CombatTab.UI.EatFleshBtn.Size = UDim2.new(0.25, 0, 0, 60); CombatTab.UI.EatFleshBtn.Position = UDim2.new(0.35, 0, 0.8, 0); CombatTab.UI.EatFleshBtn.Text = "EAT FLESH"; CombatTab.UI.EatFleshBtn.Font = Enum.Font.GothamBlack; CombatTab.UI.EatFleshBtn.TextSize = 24; CombatTab.UI.EatFleshBtn.BackgroundColor3 = Color3.fromRGB(150, 30, 30); CombatTab.UI.EatFleshBtn.TextColor3 = Color3.fromRGB(255,255,255); CombatTab.UI.EatFleshBtn.Visible = false; CombatTab.UI.EatFleshBtn.Parent = CombatTab.UI.BattleArena
 	CombatTab.UI.RestBtn = Instance.new("TextButton"); CombatTab.UI.RestBtn.Size = UDim2.new(0.25, 0, 0, 60); CombatTab.UI.RestBtn.Position = UDim2.new(0.35, 0, 0.8, 0); CombatTab.UI.RestBtn.Text = "REST (+20 Stamina)"; CombatTab.UI.RestBtn.Font = Enum.Font.GothamBlack; CombatTab.UI.RestBtn.TextSize = 18; CombatTab.UI.RestBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 255); CombatTab.UI.RestBtn.TextColor3 = Color3.fromRGB(255,255,255); CombatTab.UI.RestBtn.Visible = false; CombatTab.UI.RestBtn.Parent = CombatTab.UI.BattleArena
 	CombatTab.UI.ArataBtn = Instance.new("TextButton"); CombatTab.UI.ArataBtn.Size = UDim2.new(0.1, 0, 0, 60); CombatTab.UI.ArataBtn.Position = UDim2.new(0.62, 0, 0.8, 0); CombatTab.UI.ArataBtn.Text = "ARATA\n[OFF]"; CombatTab.UI.ArataBtn.Font = Enum.Font.GothamBlack; CombatTab.UI.ArataBtn.TextSize = 16; CombatTab.UI.ArataBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60); CombatTab.UI.ArataBtn.TextColor3 = Color3.fromRGB(200, 200, 200); CombatTab.UI.ArataBtn.Visible = false; CombatTab.UI.ArataBtn.Parent = CombatTab.UI.BattleArena
-
 	CombatTab.UI.FleeBtn = Instance.new("TextButton"); CombatTab.UI.FleeBtn.Size = UDim2.new(0.2, 0, 0, 60); CombatTab.UI.FleeBtn.Position = UDim2.new(0.75, 0, 0.8, 0); CombatTab.UI.FleeBtn.Text = "FLEE"; CombatTab.UI.FleeBtn.Font = Enum.Font.GothamBlack; CombatTab.UI.FleeBtn.TextSize = 24; CombatTab.UI.FleeBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100); CombatTab.UI.FleeBtn.TextColor3 = Color3.fromRGB(255, 255, 255); CombatTab.UI.FleeBtn.Visible = false; CombatTab.UI.FleeBtn.Parent = CombatTab.UI.BattleArena
+
+	local function updateWardBtnTxt()
+		local wName = playerData:FindFirstChild("PatrolWard") and playerData.PatrolWard.Value or "20th Ward"
+		local baseData = GameConfig.Wards[wName]
+		local val = dynWards and dynWards:FindFirstChild(wName)
+		local risk = val and val.Value or 1
+		CombatTab.UI.WardBtn.Text = "Current Patrol: " .. (baseData and baseData.Name or wName) .. " (Risk: " .. string.format("%.1fx", risk) .. ")"
+	end
 
 	task.spawn(function()
 		local wardStat = playerData:WaitForChild("PatrolWard")
-		wardStat.Changed:Connect(function() CombatTab.UI.WardBtn.Text = "Current Patrol: " .. GameConfig.Wards[wardStat.Value].Name end)
-		CombatTab.UI.WardBtn.Text = "Current Patrol: " .. GameConfig.Wards[wardStat.Value].Name
+		wardStat.Changed:Connect(updateWardBtnTxt)
+		for _, child in ipairs(dynWards:GetChildren()) do
+			child.Changed:Connect(function()
+				if playerData:FindFirstChild("PatrolWard") and playerData.PatrolWard.Value == child.Name then
+					updateWardBtnTxt()
+				end
+			end)
+		end
+		updateWardBtnTxt()
 	end)
 
 	task.spawn(function()
@@ -29,9 +84,9 @@ function CombatTab.Build(frame, CombatEvent, playerData, factionData, GameConfig
 	end)
 
 	CombatTab.UI.WardBtn.MouseButton1Click:Connect(function()
-		local current = playerData:FindFirstChild("PatrolWard") and playerData.PatrolWard.Value or "20th Ward"
-		local nextWard = "20th Ward"; if current == "20th Ward" then nextWard = "11th Ward" elseif current == "11th Ward" then nextWard = "24th Ward" end
-		CombatEvent:FireServer("ChangeWard", nextWard)
+		CombatTab.UI.WardBtn.Visible = false
+		CombatTab.UI.SearchBtn.Visible = false
+		CombatTab.UI.MapPanel.Visible = true
 	end)
 
 	CombatTab.UI.SearchBtn.MouseButton1Click:Connect(function() CombatTab.UI.SearchBtn.Visible = false; CombatTab.UI.WardBtn.Visible = false; CombatEvent:FireServer("Search") end)
@@ -43,7 +98,7 @@ function CombatTab.Build(frame, CombatEvent, playerData, factionData, GameConfig
 
 	CombatEvent.OnClientEvent:Connect(function(action, data1, data2)
 		if action == "BattleStarted" then
-			CombatTab.UI.BattleArena.Visible = true; CombatTab.UI.WardBtn.Visible = false; CombatTab.UI.SearchBtn.Visible = false; CombatTab.UI.FleeBtn.Visible = true
+			CombatTab.UI.BattleArena.Visible = true; CombatTab.UI.WardBtn.Visible = false; CombatTab.UI.SearchBtn.Visible = false; CombatTab.UI.MapPanel.Visible = false; CombatTab.UI.FleeBtn.Visible = true
 			for _, child in pairs(CombatTab.UI.CombatLog:GetChildren()) do if child:IsA("TextLabel") then child:Destroy() end end
 			CombatTab.UI.EnemyLabel.Text = data1.Name .. " HP: " .. data1.CurrentHealth .. " / " .. data1.MaxHealth; CombatTab.UpdateStats(playerData, factionData)
 			CombatTab.AddLog("Encountered " .. data1.Name .. "!")
