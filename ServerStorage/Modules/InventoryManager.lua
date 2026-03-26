@@ -88,11 +88,28 @@ function InventoryManager.Init(params)
 			if targetItem then
 				local data = HttpService:JSONDecode(targetItem.Value)
 				data.Creator = "Investigator " .. player.Name
+
+				local repGain = 0
+				if folder.Faction.Value == "CCG" and data.Name ~= "Standard Issue" and (data.ItemType == "Quinque" or data.ItemType == "Arata") then
+					local statTotal = (data.Str or 0) + (data.Spd or 0) + (data.Def or 0)
+					repGain = math.max(15, math.floor(statTotal * 2.5))
+					folder.Reputation.Value += repGain
+				end
+
 				if data.Name ~= "Standard Issue" then ShopManager.AddRetiredItem(data) end
 
-				if data.ItemType == "Quinque" and folder.EquippedQuinque.Value == targetItem.Value then folder.EquippedQuinque.Value = GameConfig.DefaultStats.EquippedQuinque; Network.notify(player, "Retired active weapon. Defaulting to Unarmed.", Color3.fromRGB(255, 150, 100))
-				elseif data.ItemType == "Arata" and folder.EquippedArata.Value == targetItem.Value then folder.EquippedArata.Value = "None"; Network.notify(player, "Retired active armor.", Color3.fromRGB(255, 150, 100))
-				else Network.notify(player, data.ItemType .. " Retired.", Color3.fromRGB(200, 200, 200)) end
+				local repMsg = repGain > 0 and (" (+ " .. repGain .. " Rep)") or ""
+
+				if data.ItemType == "Quinque" and folder.EquippedQuinque.Value == targetItem.Value then 
+					folder.EquippedQuinque.Value = GameConfig.DefaultStats.EquippedQuinque
+					Network.notify(player, "Retired active weapon." .. repMsg, Color3.fromRGB(255, 150, 100))
+				elseif data.ItemType == "Arata" and folder.EquippedArata.Value == targetItem.Value then 
+					folder.EquippedArata.Value = "None"
+					Network.notify(player, "Retired active armor." .. repMsg, Color3.fromRGB(255, 150, 100))
+				else 
+					Network.notify(player, data.ItemType .. " Retired." .. repMsg, Color3.fromRGB(200, 200, 200)) 
+				end
+
 				targetItem:Destroy(); ShopManager.RefreshShop()
 			end
 
