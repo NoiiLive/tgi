@@ -1,6 +1,8 @@
 -- @ScriptType: ModuleScript
+-- @ScriptType: ModuleScript
 local UIManager = { Tabs = {}, Frames = {}, ActiveTab = nil, Content = nil }
 local TweenService = game:GetService("TweenService")
+local SFXManager = require(game:GetService("Players").LocalPlayer:WaitForChild("PlayerScripts"):WaitForChild("SFXManager"))
 
 function UIManager.Init(playerGui)
 	if playerGui:FindFirstChild("MainGameUI") then playerGui.MainGameUI:Destroy() end
@@ -20,7 +22,10 @@ function UIManager.CreateTab(tabMenu, name, order)
 	local frame = Instance.new("Frame"); frame.Size = UDim2.new(1, 0, 1, 0); frame.BackgroundTransparency = 1; frame.Visible = false; frame.Parent = UIManager.Content
 	local fTitle = Instance.new("TextLabel"); fTitle.Size = UDim2.new(1, 0, 0, 80); fTitle.Text = name .. " Menu"; fTitle.Font = Enum.Font.GothamBlack; fTitle.TextSize = 36; fTitle.TextColor3 = Color3.fromRGB(255, 255, 255); fTitle.BackgroundTransparency = 1; fTitle.Parent = frame
 	UIManager.Tabs[name] = btn; UIManager.Frames[name] = frame
-	btn.MouseButton1Click:Connect(function() UIManager.SwitchTab(name) end)
+	btn.MouseButton1Click:Connect(function() 
+		SFXManager.Play("Click")
+		UIManager.SwitchTab(name) 
+	end)
 	return frame
 end
 
