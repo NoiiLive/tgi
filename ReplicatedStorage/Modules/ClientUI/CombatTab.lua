@@ -2,6 +2,7 @@
 -- @ScriptType: ModuleScript
 local CombatTab = { UI = {} }
 local task = task
+local TweenService = game:GetService("TweenService")
 local SFXManager = require(game:GetService("Players").LocalPlayer:WaitForChild("PlayerScripts"):WaitForChild("SFXManager"))
 
 function CombatTab.Build(frame, CombatEvent, playerData, factionData, GameConfig)
@@ -75,9 +76,21 @@ function CombatTab.Build(frame, CombatEvent, playerData, factionData, GameConfig
 	end
 
 	CombatTab.UI.BattleArena = Instance.new("Frame"); CombatTab.UI.BattleArena.Size = UDim2.new(0.9, 0, 0.8, 0); CombatTab.UI.BattleArena.Position = UDim2.new(0.05, 0, 0.15, 0); CombatTab.UI.BattleArena.BackgroundTransparency = 1; CombatTab.UI.BattleArena.Visible = false; CombatTab.UI.BattleArena.Parent = frame
-	CombatTab.UI.EnemyLabel = Instance.new("TextLabel"); CombatTab.UI.EnemyLabel.Size = UDim2.new(1, 0, 0, 50); CombatTab.UI.EnemyLabel.Font = Enum.Font.GothamBlack; CombatTab.UI.EnemyLabel.TextSize = 30; CombatTab.UI.EnemyLabel.TextColor3 = Color3.fromRGB(255, 100, 100); CombatTab.UI.EnemyLabel.BackgroundTransparency = 1; CombatTab.UI.EnemyLabel.Parent = CombatTab.UI.BattleArena
-	CombatTab.UI.CombatLog = Instance.new("ScrollingFrame"); CombatTab.UI.CombatLog.Size = UDim2.new(1, 0, 0.55, 0); CombatTab.UI.CombatLog.Position = UDim2.new(0, 0, 0.15, 0); CombatTab.UI.CombatLog.BackgroundColor3 = Color3.fromRGB(20, 20, 20); CombatTab.UI.CombatLog.AutomaticCanvasSize = Enum.AutomaticSize.Y; CombatTab.UI.CombatLog.CanvasSize = UDim2.new(0, 0, 0, 0); CombatTab.UI.CombatLog.ScrollBarThickness = 8; Instance.new("UIListLayout", CombatTab.UI.CombatLog).Parent = CombatTab.UI.CombatLog; CombatTab.UI.CombatLog.Parent = CombatTab.UI.BattleArena
-	CombatTab.UI.PlayerStatLabel = Instance.new("TextLabel"); CombatTab.UI.PlayerStatLabel.Size = UDim2.new(1, 0, 0, 30); CombatTab.UI.PlayerStatLabel.Position = UDim2.new(0, 0, 0.72, 0); CombatTab.UI.PlayerStatLabel.Font = Enum.Font.GothamBold; CombatTab.UI.PlayerStatLabel.TextSize = 22; CombatTab.UI.PlayerStatLabel.TextColor3 = Color3.fromRGB(100, 255, 100); CombatTab.UI.PlayerStatLabel.BackgroundTransparency = 1; CombatTab.UI.PlayerStatLabel.Parent = CombatTab.UI.BattleArena
+
+	CombatTab.UI.PlayerSide = Instance.new("Frame"); CombatTab.UI.PlayerSide.Size = UDim2.new(0.4, 0, 0.35, 0); CombatTab.UI.PlayerSide.Position = UDim2.new(0.05, 0, 0, 0); CombatTab.UI.PlayerSide.BackgroundTransparency = 1; CombatTab.UI.PlayerSide.Parent = CombatTab.UI.BattleArena
+	CombatTab.UI.PlayerIcon = Instance.new("ImageLabel"); CombatTab.UI.PlayerIcon.Size = UDim2.new(0, 80, 0, 80); CombatTab.UI.PlayerIcon.Position = UDim2.new(0.5, -40, 0, 0); CombatTab.UI.PlayerIcon.BackgroundColor3 = Color3.fromRGB(40, 40, 40); CombatTab.UI.PlayerIcon.Image = "rbxthumb://type=AvatarHeadShot&id=" .. game:GetService("Players").LocalPlayer.UserId .. "&w=150&h=150"; CombatTab.UI.PlayerIcon.Parent = CombatTab.UI.PlayerSide
+	CombatTab.UI.PlayerHPBG = Instance.new("Frame"); CombatTab.UI.PlayerHPBG.Size = UDim2.new(1, 0, 0, 20); CombatTab.UI.PlayerHPBG.Position = UDim2.new(0, 0, 0, 90); CombatTab.UI.PlayerHPBG.BackgroundColor3 = Color3.fromRGB(60, 20, 20); CombatTab.UI.PlayerHPBG.Parent = CombatTab.UI.PlayerSide
+	CombatTab.UI.PlayerHPFill = Instance.new("Frame"); CombatTab.UI.PlayerHPFill.Size = UDim2.new(1, 0, 1, 0); CombatTab.UI.PlayerHPFill.BackgroundColor3 = Color3.fromRGB(50, 200, 50); CombatTab.UI.PlayerHPFill.BorderSizePixel = 0; CombatTab.UI.PlayerHPFill.Parent = CombatTab.UI.PlayerHPBG
+	CombatTab.UI.PlayerStatLabel = Instance.new("TextLabel"); CombatTab.UI.PlayerStatLabel.Size = UDim2.new(1, 0, 0, 30); CombatTab.UI.PlayerStatLabel.Position = UDim2.new(0, 0, 0, 115); CombatTab.UI.PlayerStatLabel.Font = Enum.Font.GothamBold; CombatTab.UI.PlayerStatLabel.TextSize = 14; CombatTab.UI.PlayerStatLabel.TextColor3 = Color3.fromRGB(200, 255, 200); CombatTab.UI.PlayerStatLabel.BackgroundTransparency = 1; CombatTab.UI.PlayerStatLabel.Parent = CombatTab.UI.PlayerSide
+
+	CombatTab.UI.EnemySide = Instance.new("Frame"); CombatTab.UI.EnemySide.Size = UDim2.new(0.4, 0, 0.35, 0); CombatTab.UI.EnemySide.Position = UDim2.new(0.55, 0, 0, 0); CombatTab.UI.EnemySide.BackgroundTransparency = 1; CombatTab.UI.EnemySide.Parent = CombatTab.UI.BattleArena
+	CombatTab.UI.EnemyIconBG = Instance.new("Frame"); CombatTab.UI.EnemyIconBG.Size = UDim2.new(0, 80, 0, 80); CombatTab.UI.EnemyIconBG.Position = UDim2.new(0.5, -40, 0, 0); CombatTab.UI.EnemyIconBG.BackgroundColor3 = Color3.fromRGB(40, 40, 40); CombatTab.UI.EnemyIconBG.Parent = CombatTab.UI.EnemySide
+	CombatTab.UI.EnemyIconTxt = Instance.new("TextLabel"); CombatTab.UI.EnemyIconTxt.Size = UDim2.new(1, 0, 1, 0); CombatTab.UI.EnemyIconTxt.Text = "?"; CombatTab.UI.EnemyIconTxt.Font = Enum.Font.GothamBlack; CombatTab.UI.EnemyIconTxt.TextSize = 50; CombatTab.UI.EnemyIconTxt.TextColor3 = Color3.fromRGB(200, 50, 50); CombatTab.UI.EnemyIconTxt.BackgroundTransparency = 1; CombatTab.UI.EnemyIconTxt.Parent = CombatTab.UI.EnemyIconBG
+	CombatTab.UI.EnemyHPBG = Instance.new("Frame"); CombatTab.UI.EnemyHPBG.Size = UDim2.new(1, 0, 0, 20); CombatTab.UI.EnemyHPBG.Position = UDim2.new(0, 0, 0, 90); CombatTab.UI.EnemyHPBG.BackgroundColor3 = Color3.fromRGB(60, 20, 20); CombatTab.UI.EnemyHPBG.Parent = CombatTab.UI.EnemySide
+	CombatTab.UI.EnemyHPFill = Instance.new("Frame"); CombatTab.UI.EnemyHPFill.Size = UDim2.new(1, 0, 1, 0); CombatTab.UI.EnemyHPFill.BackgroundColor3 = Color3.fromRGB(255, 50, 50); CombatTab.UI.EnemyHPFill.BorderSizePixel = 0; CombatTab.UI.EnemyHPFill.Parent = CombatTab.UI.EnemyHPBG
+	CombatTab.UI.EnemyLabel = Instance.new("TextLabel"); CombatTab.UI.EnemyLabel.Size = UDim2.new(1, 0, 0, 30); CombatTab.UI.EnemyLabel.Position = UDim2.new(0, 0, 0, 115); CombatTab.UI.EnemyLabel.Font = Enum.Font.GothamBold; CombatTab.UI.EnemyLabel.TextSize = 14; CombatTab.UI.EnemyLabel.TextColor3 = Color3.fromRGB(255, 150, 150); CombatTab.UI.EnemyLabel.BackgroundTransparency = 1; CombatTab.UI.EnemyLabel.Parent = CombatTab.UI.EnemySide
+
+	CombatTab.UI.CombatLog = Instance.new("ScrollingFrame"); CombatTab.UI.CombatLog.Size = UDim2.new(1, 0, 0.35, 0); CombatTab.UI.CombatLog.Position = UDim2.new(0, 0, 0.4, 0); CombatTab.UI.CombatLog.BackgroundColor3 = Color3.fromRGB(20, 20, 20); CombatTab.UI.CombatLog.AutomaticCanvasSize = Enum.AutomaticSize.Y; CombatTab.UI.CombatLog.CanvasSize = UDim2.new(0, 0, 0, 0); CombatTab.UI.CombatLog.ScrollBarThickness = 8; Instance.new("UIListLayout", CombatTab.UI.CombatLog).Parent = CombatTab.UI.CombatLog; CombatTab.UI.CombatLog.Parent = CombatTab.UI.BattleArena
 
 	CombatTab.UI.AttackBtn = Instance.new("TextButton"); CombatTab.UI.AttackBtn.Size = UDim2.new(0.25, 0, 0, 60); CombatTab.UI.AttackBtn.Position = UDim2.new(0.05, 0, 0.8, 0); CombatTab.UI.AttackBtn.Text = "ATTACK"; CombatTab.UI.AttackBtn.Font = Enum.Font.GothamBlack; CombatTab.UI.AttackBtn.TextSize = 24; CombatTab.UI.AttackBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50); CombatTab.UI.AttackBtn.TextColor3 = Color3.fromRGB(255,255,255); CombatTab.UI.AttackBtn.Parent = CombatTab.UI.BattleArena
 	CombatTab.UI.EatFleshBtn = Instance.new("TextButton"); CombatTab.UI.EatFleshBtn.Size = UDim2.new(0.25, 0, 0, 60); CombatTab.UI.EatFleshBtn.Position = UDim2.new(0.35, 0, 0.8, 0); CombatTab.UI.EatFleshBtn.Text = "EAT FLESH"; CombatTab.UI.EatFleshBtn.Font = Enum.Font.GothamBlack; CombatTab.UI.EatFleshBtn.TextSize = 24; CombatTab.UI.EatFleshBtn.BackgroundColor3 = Color3.fromRGB(150, 30, 30); CombatTab.UI.EatFleshBtn.TextColor3 = Color3.fromRGB(255,255,255); CombatTab.UI.EatFleshBtn.Visible = false; CombatTab.UI.EatFleshBtn.Parent = CombatTab.UI.BattleArena
@@ -147,45 +160,79 @@ function CombatTab.Build(frame, CombatEvent, playerData, factionData, GameConfig
 
 	CombatEvent.OnClientEvent:Connect(function(action, data1, data2)
 		if action == "BattleStarted" then
-			SFXManager.Play("CombatUtility")
 			CombatTab.UI.BattleArena.Visible = true; CombatTab.UI.WardBtn.Visible = false; CombatTab.UI.SearchBtn.Visible = false; CombatTab.UI.MapPanel.Visible = false; CombatTab.UI.FleeBtn.Visible = true
 			for _, child in pairs(CombatTab.UI.CombatLog:GetChildren()) do if child:IsA("TextLabel") then child:Destroy() end end
-			CombatTab.UI.EnemyLabel.Text = data1.Name .. " HP: " .. data1.CurrentHealth .. " / " .. data1.MaxHealth; CombatTab.UpdateStats(playerData, factionData)
+
+			CombatTab.UI.EnemyLabel.Text = data1.Name .. " (" .. data1.CurrentHealth .. "/" .. data1.MaxHealth .. ")"
+			CombatTab.UI.EnemyHPFill.Size = UDim2.new(math.clamp(data1.CurrentHealth / data1.MaxHealth, 0, 1), 0, 1, 0)
+
+			CombatTab.UpdateStats(playerData, factionData)
 			CombatTab.AddLog("Encountered " .. data1.Name .. "!")
 		elseif action == "TurnUpdate" then
-			CombatTab.UI.EnemyLabel.Text = data1.Name .. " HP: " .. data1.CurrentHealth .. " / " .. data1.MaxHealth; CombatTab.UpdateStats(playerData, factionData)
-			local playedHit = false
-			for _, str in ipairs(data2) do 
-				CombatTab.AddLog(str)
-				if not playedHit and string.find(string.lower(str), "damage") then
-					SFXManager.Play("CombatHit")
-					playedHit = true
+			CombatTab.UI.AttackBtn.Visible = false
+			CombatTab.UI.EatFleshBtn.Visible = false
+			CombatTab.UI.RestBtn.Visible = false
+			CombatTab.UI.ArataBtn.Visible = false
+			CombatTab.UI.FleeBtn.Visible = false
+
+			task.spawn(function()
+				for _, str in ipairs(data2) do 
+					CombatTab.AddLog(str)
+					if string.find(string.lower(str), "damage") then
+						SFXManager.Play("CombatHit")
+						CombatTab.ShakeScreen()
+					end
+					task.wait(1)
 				end
-			end
+
+				CombatTab.UI.EnemyLabel.Text = data1.Name .. " (" .. data1.CurrentHealth .. "/" .. data1.MaxHealth .. ")"
+				local targetEnemySize = UDim2.new(math.clamp(data1.CurrentHealth / data1.MaxHealth, 0, 1), 0, 1, 0)
+				TweenService:Create(CombatTab.UI.EnemyHPFill, TweenInfo.new(0.3), {Size = targetEnemySize}):Play()
+
+				CombatTab.UpdateStats(playerData, factionData)
+				CombatTab.UI.AttackBtn.Visible = true
+				CombatTab.UI.FleeBtn.Visible = true
+			end)
 		elseif action == "BattleEnded" then
-			CombatTab.UpdateStats(playerData, factionData)
+			CombatTab.UI.AttackBtn.Visible = false
+			CombatTab.UI.EatFleshBtn.Visible = false
+			CombatTab.UI.RestBtn.Visible = false
+			CombatTab.UI.ArataBtn.Visible = false
+			CombatTab.UI.FleeBtn.Visible = false
 
-			local isVictory = false
-			local isDefeat = false
+			task.spawn(function()
+				local isVictory = false
+				local isDefeat = false
 
-			for _, str in ipairs(data1) do 
-				CombatTab.AddLog(str)
-				local lowerStr = string.lower(str)
-				if string.find(lowerStr, "enemy defeated") then isVictory = true end
-				if string.find(lowerStr, "you were defeated") then isDefeat = true end
-			end
+				for _, str in ipairs(data1) do 
+					CombatTab.AddLog(str)
+					local lowerStr = string.lower(str)
+					if string.find(lowerStr, "damage") then
+						SFXManager.Play("CombatHit")
+						CombatTab.ShakeScreen()
+					end
+					if string.find(lowerStr, "enemy defeated") then isVictory = true end
+					if string.find(lowerStr, "you were defeated") then isDefeat = true end
+					task.wait(1)
+				end
 
-			if isVictory then 
-				SFXManager.Play("CombatVictory")
-			elseif isDefeat then 
-				SFXManager.Play("CombatDefeat")
-			else 
-				SFXManager.Play("CombatUtility") -- Fleeing case
-			end
+				CombatTab.UpdateStats(playerData, factionData)
 
-			CombatTab.UI.AttackBtn.Visible = false; CombatTab.UI.EatFleshBtn.Visible = false; CombatTab.UI.RestBtn.Visible = false; CombatTab.UI.ArataBtn.Visible = false; CombatTab.UI.FleeBtn.Visible = false
-			task.wait(3) 
-			CombatTab.UI.BattleArena.Visible = false; CombatTab.UI.AttackBtn.Visible = true; CombatTab.UI.SearchBtn.Visible = true; CombatTab.UI.WardBtn.Visible = true; CombatTab.UpdateStats(playerData, factionData)
+				if isVictory then 
+					SFXManager.Play("CombatVictory")
+				elseif isDefeat then 
+					SFXManager.Play("CombatDefeat")
+				else 
+					SFXManager.Play("CombatUtility") 
+				end
+
+				task.wait(3) 
+				CombatTab.UI.BattleArena.Visible = false
+				CombatTab.UI.AttackBtn.Visible = true
+				CombatTab.UI.SearchBtn.Visible = true
+				CombatTab.UI.WardBtn.Visible = true
+				CombatTab.UpdateStats(playerData, factionData)
+			end)
 		end
 	end)
 end
@@ -194,26 +241,49 @@ function CombatTab.UpdateStats(playerData, factionData)
 	if not CombatTab.UI.PlayerStatLabel then return end
 	local hp = playerData:FindFirstChild("CurrentHealth") and playerData.CurrentHealth.Value or 0
 	local maxHp = playerData:FindFirstChild("MaxHealth") and playerData.MaxHealth.Value or 0
+
+	if CombatTab.UI.PlayerHPFill then 
+		local targetSize = UDim2.new(maxHp > 0 and math.clamp(hp / maxHp, 0, 1) or 0, 0, 1, 0)
+		TweenService:Create(CombatTab.UI.PlayerHPFill, TweenInfo.new(0.3), {Size = targetSize}):Play()
+	end
+
 	local fac = factionData.Value; local extraTxt = ""
 	if fac == "GHOUL" then 
 		extraTxt = "  |  Hunger: " .. (playerData:FindFirstChild("Hunger") and playerData.Hunger.Value or 0)
-		CombatTab.UI.EatFleshBtn.Visible = true; CombatTab.UI.RestBtn.Visible = false; CombatTab.UI.ArataBtn.Visible = false
+		if CombatTab.UI.AttackBtn.Visible then CombatTab.UI.EatFleshBtn.Visible = true end
+		CombatTab.UI.RestBtn.Visible = false; CombatTab.UI.ArataBtn.Visible = false
 	elseif fac == "CCG" then 
 		extraTxt = "  |  Stamina: " .. (playerData:FindFirstChild("CurrentStamina") and playerData.CurrentStamina.Value or 0) .. " / " .. (playerData:FindFirstChild("Stamina") and playerData.Stamina.Value or 0)
-		CombatTab.UI.EatFleshBtn.Visible = false; CombatTab.UI.RestBtn.Visible = true
+		CombatTab.UI.EatFleshBtn.Visible = false
+		if CombatTab.UI.AttackBtn.Visible then CombatTab.UI.RestBtn.Visible = true end
+
 		local arataState = playerData:FindFirstChild("ArataActive") and playerData.ArataActive.Value or false
 		if playerData:FindFirstChild("EquippedArata") and playerData.EquippedArata.Value ~= "None" then
-			CombatTab.UI.ArataBtn.Visible = true; CombatTab.UI.ArataBtn.Text = arataState and "ARATA\n[ON]" or "ARATA\n[OFF]"
+			if CombatTab.UI.AttackBtn.Visible then CombatTab.UI.ArataBtn.Visible = true end
+			CombatTab.UI.ArataBtn.Text = arataState and "ARATA\n[ON]" or "ARATA\n[OFF]"
 			CombatTab.UI.ArataBtn.BackgroundColor3 = arataState and Color3.fromRGB(200, 50, 50) or Color3.fromRGB(60, 60, 60)
 			CombatTab.UI.ArataBtn.TextColor3 = arataState and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
 		else CombatTab.UI.ArataBtn.Visible = false end
 	end
-	CombatTab.UI.PlayerStatLabel.Text = "Your HP: " .. hp .. " / " .. maxHp .. extraTxt
+	CombatTab.UI.PlayerStatLabel.Text = "HP: " .. hp .. " / " .. maxHp .. extraTxt
 end
 
 function CombatTab.AddLog(msgText)
 	local msg = Instance.new("TextLabel"); msg.Size = UDim2.new(1, 0, 0, 30); msg.Text = " " .. msgText; msg.Font = Enum.Font.Gotham; msg.TextSize = 18; msg.TextColor3 = Color3.fromRGB(200, 200, 200); msg.BackgroundTransparency = 1; msg.TextXAlignment = Enum.TextXAlignment.Left; msg.Parent = CombatTab.UI.CombatLog
 	task.defer(function() CombatTab.UI.CombatLog.CanvasPosition = Vector2.new(0, CombatTab.UI.CombatLog.AbsoluteCanvasSize.Y) end)
+end
+
+function CombatTab.ShakeScreen()
+	local arena = CombatTab.UI.BattleArena
+	if not arena then return end
+	local basePos = UDim2.new(0.05, 0, 0.15, 0)
+	task.spawn(function()
+		for i = 1, 5 do
+			arena.Position = basePos + UDim2.new(0, math.random(-8, 8), 0, math.random(-8, 8))
+			task.wait(0.04)
+		end
+		arena.Position = basePos
+	end)
 end
 
 return CombatTab
