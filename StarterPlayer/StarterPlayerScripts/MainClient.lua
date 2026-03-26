@@ -1,9 +1,13 @@
 -- @ScriptType: LocalScript
+-- @ScriptType: LocalScript
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
+
+local SFXManager = require(player:WaitForChild("PlayerScripts"):WaitForChild("SFXManager"))
+SFXManager.Init()
 
 local GameConfig = require(ReplicatedStorage:WaitForChild("Modules"):WaitForChild("GameConfig"))
 local UIMod = ReplicatedStorage:WaitForChild("Modules"):WaitForChild("ClientUI")
