@@ -158,8 +158,73 @@ function CombatTab.Build(frame, CombatEvent, playerData, factionData, GameConfig
 	CombatTab.UI.ArataBtn.MouseButton1Click:Connect(function() SFXManager.Play("Click"); CombatEvent:FireServer("ToggleArata") end)
 	CombatTab.UI.FleeBtn.MouseButton1Click:Connect(function() SFXManager.Play("Click"); CombatEvent:FireServer("Flee") end)
 
+	local function PlayLogSequence(logTable, onComplete)
+		CombatTab.UI.AttackBtn.Visible = false
+		CombatTab.UI.EatFleshBtn.Visible = false
+		CombatTab.UI.RestBtn.Visible = false
+		CombatTab.UI.ArataBtn.Visible = false
+		CombatTab.UI.FleeBtn.Visible = false
+
+		task.spawn(function()
+			local enemyMaxHP = CombatTab.CurrentEnemyMaxHP or 100
+			local playerMaxHP = playerData:FindFirstChild("MaxHealth") and playerData.MaxHealth.Value or 100
+
+			for _, str in ipairs(logTable) do
+				CombatTab.AddLog(str)
+
+				local lowerStr = string.lower(str)
+				local changedEnemy = false
+				local changedPlayer = false
+
+				if string.find(lowerStr, "you struck") then
+					CombatTab.VisualEnemyHP = math.max(0, CombatTab.VisualEnemyHP - (tonumber(string.match(str, "%d+")) or 0))
+					changedEnemy = true
+				elseif string.find(lowerStr, "retaliated") or string.find(lowerStr, "enemy struck you") or string.find(lowerStr, "took %d+ damage") then
+					local dmg = tonumber(string.match(lowerStr, "took (%d+) damage")) or tonumber(string.match(lowerStr, "for (%d+) damage")) or tonumber(string.match(str, "%d+")) or 0
+					CombatTab.VisualPlayerHP = math.max(0, CombatTab.VisualPlayerHP - dmg)
+					changedPlayer = true
+				elseif string.find(lowerStr, "drained") then
+					CombatTab.VisualPlayerHP = math.min(playerMaxHP, CombatTab.VisualPlayerHP + (tonumber(string.match(str, "%d+")) or 0))
+					changedPlayer = true
+				elseif string.find(lowerStr, "arata armor consumes") then
+					CombatTab.VisualPlayerHP = math.max(0, CombatTab.VisualPlayerHP - 10)
+					changedPlayer = true
+				elseif string.find(lowerStr, "recoil") then
+					CombatTab.VisualPlayerHP = math.max(0, CombatTab.VisualPlayerHP - 3)
+					changedPlayer = true
+				elseif string.find(lowerStr, "sacrificed hp") then
+					CombatTab.VisualPlayerHP = math.max(0, CombatTab.VisualPlayerHP - 5)
+					changedPlayer = true
+				end
+
+				if changedEnemy then
+					CombatTab.UI.EnemyLabel.Text = (CombatTab.CurrentEnemyName or "Enemy") .. " (" .. CombatTab.VisualEnemyHP .. "/" .. enemyMaxHP .. ")"
+					TweenService:Create(CombatTab.UI.EnemyHPFill, TweenInfo.new(0.3), {Size = UDim2.new(math.clamp(CombatTab.VisualEnemyHP / enemyMaxHP, 0, 1), 0, 1, 0)}):Play()
+					SFXManager.Play("CombatHit")
+					CombatTab.ShakeScreen()
+				end
+
+				if changedPlayer then
+					CombatTab.UpdateStats(playerData, factionData, CombatTab.VisualPlayerHP, playerMaxHP)
+					TweenService:Create(CombatTab.UI.PlayerHPFill, TweenInfo.new(0.3), {Size = UDim2.new(math.clamp(CombatTab.VisualPlayerHP / playerMaxHP, 0, 1), 0, 1, 0)}):Play()
+					SFXManager.Play("CombatHit")
+					CombatTab.ShakeScreen()
+				end
+
+				task.wait(1)
+			end
+
+			if onComplete then onComplete() end
+		end)
+	end
+
 	CombatEvent.OnClientEvent:Connect(function(action, data1, data2)
 		if action == "BattleStarted" then
+			CombatTab.CurrentEnemyName = data1.Name
+			CombatTab.CurrentEnemyMaxHP = data1.MaxHealth
+			CombatTab.VisualEnemyHP = data1.CurrentHealth
+			CombatTab.VisualPlayerHP = playerData:FindFirstChild("CurrentHealth") and playerData.CurrentHealth.Value or 100
+
 			CombatTab.UI.BattleArena.Visible = true; CombatTab.UI.WardBtn.Visible = false; CombatTab.UI.SearchBtn.Visible = false; CombatTab.UI.MapPanel.Visible = false; CombatTab.UI.FleeBtn.Visible = true
 			for _, child in pairs(CombatTab.UI.CombatLog:GetChildren()) do if child:IsA("TextLabel") then child:Destroy() end end
 
@@ -169,53 +234,29 @@ function CombatTab.Build(frame, CombatEvent, playerData, factionData, GameConfig
 			CombatTab.UpdateStats(playerData, factionData)
 			CombatTab.AddLog("Encountered " .. data1.Name .. "!")
 		elseif action == "TurnUpdate" then
-			CombatTab.UI.AttackBtn.Visible = false
-			CombatTab.UI.EatFleshBtn.Visible = false
-			CombatTab.UI.RestBtn.Visible = false
-			CombatTab.UI.ArataBtn.Visible = false
-			CombatTab.UI.FleeBtn.Visible = false
+			PlayLogSequence(data2, function()
+				CombatTab.VisualEnemyHP = data1.CurrentHealth
+				CombatTab.UI.EnemyLabel.Text = (CombatTab.CurrentEnemyName or "Enemy") .. " (" .. CombatTab.VisualEnemyHP .. "/" .. CombatTab.CurrentEnemyMaxHP .. ")"
+				TweenService:Create(CombatTab.UI.EnemyHPFill, TweenInfo.new(0.3), {Size = UDim2.new(math.clamp(CombatTab.VisualEnemyHP / CombatTab.CurrentEnemyMaxHP, 0, 1), 0, 1, 0)}):Play()
 
-			task.spawn(function()
-				for _, str in ipairs(data2) do 
-					CombatTab.AddLog(str)
-					if string.find(string.lower(str), "damage") then
-						SFXManager.Play("CombatHit")
-						CombatTab.ShakeScreen()
-					end
-					task.wait(1)
-				end
-
-				CombatTab.UI.EnemyLabel.Text = data1.Name .. " (" .. data1.CurrentHealth .. "/" .. data1.MaxHealth .. ")"
-				local targetEnemySize = UDim2.new(math.clamp(data1.CurrentHealth / data1.MaxHealth, 0, 1), 0, 1, 0)
-				TweenService:Create(CombatTab.UI.EnemyHPFill, TweenInfo.new(0.3), {Size = targetEnemySize}):Play()
-
+				CombatTab.VisualPlayerHP = playerData:FindFirstChild("CurrentHealth") and playerData.CurrentHealth.Value or 100
 				CombatTab.UpdateStats(playerData, factionData)
+
 				CombatTab.UI.AttackBtn.Visible = true
 				CombatTab.UI.FleeBtn.Visible = true
 			end)
 		elseif action == "BattleEnded" then
-			CombatTab.UI.AttackBtn.Visible = false
-			CombatTab.UI.EatFleshBtn.Visible = false
-			CombatTab.UI.RestBtn.Visible = false
-			CombatTab.UI.ArataBtn.Visible = false
-			CombatTab.UI.FleeBtn.Visible = false
-
-			task.spawn(function()
+			PlayLogSequence(data1, function()
 				local isVictory = false
 				local isDefeat = false
 
 				for _, str in ipairs(data1) do 
-					CombatTab.AddLog(str)
 					local lowerStr = string.lower(str)
-					if string.find(lowerStr, "damage") then
-						SFXManager.Play("CombatHit")
-						CombatTab.ShakeScreen()
-					end
 					if string.find(lowerStr, "enemy defeated") then isVictory = true end
 					if string.find(lowerStr, "you were defeated") then isDefeat = true end
-					task.wait(1)
 				end
 
+				CombatTab.VisualPlayerHP = playerData:FindFirstChild("CurrentHealth") and playerData.CurrentHealth.Value or 100
 				CombatTab.UpdateStats(playerData, factionData)
 
 				if isVictory then 
@@ -227,22 +268,18 @@ function CombatTab.Build(frame, CombatEvent, playerData, factionData, GameConfig
 				end
 
 				task.wait(3) 
-				CombatTab.UI.BattleArena.Visible = false
-				CombatTab.UI.AttackBtn.Visible = true
-				CombatTab.UI.SearchBtn.Visible = true
-				CombatTab.UI.WardBtn.Visible = true
-				CombatTab.UpdateStats(playerData, factionData)
+				CombatTab.UI.BattleArena.Visible = false; CombatTab.UI.AttackBtn.Visible = true; CombatTab.UI.SearchBtn.Visible = true; CombatTab.UI.WardBtn.Visible = true; CombatTab.UpdateStats(playerData, factionData)
 			end)
 		end
 	end)
 end
 
-function CombatTab.UpdateStats(playerData, factionData)
+function CombatTab.UpdateStats(playerData, factionData, hpOverride, maxHpOverride)
 	if not CombatTab.UI.PlayerStatLabel then return end
-	local hp = playerData:FindFirstChild("CurrentHealth") and playerData.CurrentHealth.Value or 0
-	local maxHp = playerData:FindFirstChild("MaxHealth") and playerData.MaxHealth.Value or 0
+	local maxHp = maxHpOverride or (playerData:FindFirstChild("MaxHealth") and playerData.MaxHealth.Value or 100)
+	local hp = hpOverride or (playerData:FindFirstChild("CurrentHealth") and playerData.CurrentHealth.Value or 0)
 
-	if CombatTab.UI.PlayerHPFill then 
+	if CombatTab.UI.PlayerHPFill and not hpOverride then 
 		local targetSize = UDim2.new(maxHp > 0 and math.clamp(hp / maxHp, 0, 1) or 0, 0, 1, 0)
 		TweenService:Create(CombatTab.UI.PlayerHPFill, TweenInfo.new(0.3), {Size = targetSize}):Play()
 	end
@@ -279,7 +316,7 @@ function CombatTab.ShakeScreen()
 	local basePos = UDim2.new(0.05, 0, 0.15, 0)
 	task.spawn(function()
 		for i = 1, 5 do
-			arena.Position = basePos + UDim2.new(0, math.random(-8, 8), 0, math.random(-8, 8))
+			arena.Position = basePos + UDim2.new(0, math.random(-8, 8) / 1000, 0, math.random(-8, 8) / 1000)
 			task.wait(0.04)
 		end
 		arena.Position = basePos
