@@ -1,4 +1,5 @@
 -- @ScriptType: ModuleScript
+-- @ScriptType: ModuleScript
 local CombatManager = { ActiveBattles = {} }
 local HttpService = game:GetService("HttpService")
 
@@ -13,21 +14,43 @@ function CombatManager.Init(params)
 		dynamicWards = Instance.new("Folder")
 		dynamicWards.Name = "DynamicWards"
 		dynamicWards.Parent = RS
+
+		local nextTick = Instance.new("IntValue")
+		nextTick.Name = "NextRiskIncrease"
+		nextTick.Value = os.time() + GameConfig.WardPassiveTickRate
+		nextTick.Parent = dynamicWards
+
 		for wardName, _ in pairs(GameConfig.Wards) do
 			local val = Instance.new("NumberValue")
 			val.Name = wardName
 			val.Value = math.random(10, 50) / 10
+
+			local ccgKills = Instance.new("IntValue")
+			ccgKills.Name = "CCGKills"
+			ccgKills.Value = 0
+			ccgKills.Parent = val
+
+			local ghoulKills = Instance.new("IntValue")
+			ghoulKills.Name = "GhoulKills"
+			ghoulKills.Value = 0
+			ghoulKills.Parent = val
+
 			val.Parent = dynamicWards
 		end
 	end
 
 	task.spawn(function()
 		while true do
-			task.wait(60)
-			if dynamicWards then
-				for _, wVal in ipairs(dynamicWards:GetChildren()) do
-					if wVal:IsA("NumberValue") then
-						wVal.Value = math.min(5.0, wVal.Value + 0.1)
+			task.wait(1)
+			local dynWards = game:GetService("ReplicatedStorage"):FindFirstChild("DynamicWards")
+			if dynWards then
+				local tickVal = dynWards:FindFirstChild("NextRiskIncrease")
+				if tickVal and os.time() >= tickVal.Value then
+					tickVal.Value = os.time() + GameConfig.WardPassiveTickRate
+					for _, wVal in ipairs(dynWards:GetChildren()) do
+						if wVal:IsA("NumberValue") then
+							wVal.Value = math.min(5.0, wVal.Value + 0.1)
+						end
 					end
 				end
 			end
@@ -131,6 +154,22 @@ function CombatManager.ProcessTurn(player, actionType)
 			if folder.CurrentHealth.Value <= 0 then
 				table.insert(log, "The Arata Armor devoured you..."); CombatManager.ActiveBattles[player] = nil
 				folder.CurrentHealth.Value = folder.MaxHealth.Value; folder.CurrentStamina.Value = folder.Stamina.Value; folder.ArataActive.Value = false; folder.ArataHasEaten.Value = false
+
+				local dynWards = game:GetService("ReplicatedStorage"):FindFirstChild("DynamicWards")
+				if dynWards and folder:FindFirstChild("PatrolWard") then
+					local wVal = dynWards:FindFirstChild(folder.PatrolWard.Value)
+					if wVal and wVal:IsA("NumberValue") then
+						local ghoulKills = wVal:FindFirstChild("GhoulKills")
+						if ghoulKills then
+							ghoulKills.Value += 1
+							if ghoulKills.Value >= GameConfig.WardKillsToShift then
+								ghoulKills.Value = 0
+								wVal.Value = math.min(5.0, wVal.Value + 0.1)
+							end
+						end
+					end
+				end
+
 				CombatEvent:FireClient(player, "BattleEnded", log)
 				return
 			end
@@ -210,17 +249,59 @@ function CombatManager.ProcessTurn(player, actionType)
 	else folder.CurrentHealth.Value -= actualEnemyDamage; table.insert(log, "Enemy struck you for " .. actualEnemyDamage .. " damage!") end
 
 	if folder.CurrentHealth.Value <= 0 then
-		table.insert(log, "You were defeated..."); CombatManager.ActiveBattles[player] = nil; folder.CurrentHealth.Value = folder.MaxHealth.Value; folder.CurrentStamina.Value = folder.Stamina.Value; folder.ArataActive.Value = false; folder.ArataHasEaten.Value = false
+		table.insert(log, "You were defeated...")
+
+		local dynWards = game:GetService("ReplicatedStorage"):FindFirstChild("DynamicWards")
+		if dynWards and folder:FindFirstChild("PatrolWard") then
+			local wVal = dynWards:FindFirstChild(folder.PatrolWard.Value)
+			if wVal and wVal:IsA("NumberValue") then
+				if folder.Faction.Value == "CCG" then
+					local ghoulKills = wVal:FindFirstChild("GhoulKills")
+					if ghoulKills then
+						ghoulKills.Value += 1
+						if ghoulKills.Value >= GameConfig.WardKillsToShift then
+							ghoulKills.Value = 0
+							wVal.Value = math.min(5.0, wVal.Value + 0.1)
+						end
+					end
+				elseif folder.Faction.Value == "GHOUL" then
+					local ccgKills = wVal:FindFirstChild("CCGKills")
+					if ccgKills then
+						ccgKills.Value += 1
+						if ccgKills.Value >= GameConfig.WardKillsToShift then
+							ccgKills.Value = 0
+							wVal.Value = math.max(1.0, wVal.Value - 0.1)
+						end
+					end
+				end
+			end
+		end
+
+		CombatManager.ActiveBattles[player] = nil; folder.CurrentHealth.Value = folder.MaxHealth.Value; folder.CurrentStamina.Value = folder.Stamina.Value; folder.ArataActive.Value = false; folder.ArataHasEaten.Value = false
 		CombatEvent:FireClient(player, "BattleEnded", log)
 	elseif enemy.CurrentHealth <= 0 then
 		local dynWards = game:GetService("ReplicatedStorage"):FindFirstChild("DynamicWards")
 		if dynWards and folder:FindFirstChild("PatrolWard") then
 			local wVal = dynWards:FindFirstChild(folder.PatrolWard.Value)
-			if wVal then
+			if wVal and wVal:IsA("NumberValue") then
 				if folder.Faction.Value == "CCG" then
-					wVal.Value = math.max(1.0, wVal.Value - 0.1)
+					local ccgKills = wVal:FindFirstChild("CCGKills")
+					if ccgKills then
+						ccgKills.Value += 1
+						if ccgKills.Value >= GameConfig.WardKillsToShift then
+							ccgKills.Value = 0
+							wVal.Value = math.max(1.0, wVal.Value - 0.1)
+						end
+					end
 				elseif folder.Faction.Value == "GHOUL" then
-					wVal.Value = math.min(5.0, wVal.Value + 0.1)
+					local ghoulKills = wVal:FindFirstChild("GhoulKills")
+					if ghoulKills then
+						ghoulKills.Value += 1
+						if ghoulKills.Value >= GameConfig.WardKillsToShift then
+							ghoulKills.Value = 0
+							wVal.Value = math.min(5.0, wVal.Value + 0.1)
+						end
+					end
 				end
 			end
 		end
