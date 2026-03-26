@@ -1,5 +1,4 @@
 -- @ScriptType: ModuleScript
--- @ScriptType: ModuleScript
 local CombatManager = { ActiveBattles = {} }
 local HttpService = game:GetService("HttpService")
 
@@ -21,6 +20,19 @@ function CombatManager.Init(params)
 			val.Parent = dynamicWards
 		end
 	end
+
+	task.spawn(function()
+		while true do
+			task.wait(60)
+			if dynamicWards then
+				for _, wVal in ipairs(dynamicWards:GetChildren()) do
+					if wVal:IsA("NumberValue") then
+						wVal.Value = math.min(5.0, wVal.Value + 0.1)
+					end
+				end
+			end
+		end
+	end)
 
 	CombatEvent.OnServerEvent:Connect(function(player, action, value)
 		local folder = player:FindFirstChild("PlayerData")
@@ -57,7 +69,6 @@ function CombatManager.Init(params)
 end
 
 function CombatManager.GenerateEnemy(player)
-	local template = EnemyConfig.Enemies[math.random(1, #EnemyConfig.Enemies)]
 	local folder = player:FindFirstChild("PlayerData")
 	local wardMult = 1
 
@@ -66,6 +77,17 @@ function CombatManager.GenerateEnemy(player)
 		local wVal = dynWards and dynWards:FindFirstChild(folder.PatrolWard.Value)
 		if wVal then wardMult = wVal.Value end
 	end
+
+	local validEnemies = {}
+	for _, template in ipairs(EnemyConfig.Enemies) do
+		if template.Name == "Kakuja Boss" then
+			if wardMult > 3.0 then table.insert(validEnemies, template) end
+		else
+			table.insert(validEnemies, template)
+		end
+	end
+
+	local template = validEnemies[math.random(1, #validEnemies)]
 
 	local hp = math.floor(math.random(template.MinHP, template.MaxHP) * wardMult)
 	CombatManager.ActiveBattles[player] = { 
@@ -213,9 +235,16 @@ function CombatManager.ProcessTurn(player, actionType)
 			if math.random(1, 100) <= EnemyConfig.LootRates.Ghoul_KakuhouChance then DataManager.GiveItem(player, {ItemType = "Kakuhou", Name = "Generic Kakuhou"}); Network.notify(player, "Looted a Kakuhou!", Color3.fromRGB(200, 50, 255)) end
 		elseif folder.Faction.Value == "CCG" then
 			if math.random(1, 100) <= EnemyConfig.LootRates.CCG_KakuhouChance then 
+				local isArata = (enemy.Name == "Kakuja Boss") and (math.random(1, 100) <= 30) or false
 				local kakuName = enemy.Name == "Kakuja Boss" and "Kakuja Kakuhou" or (enemy.Kagune .. " Kakuhou")
-				local kakuData = { ItemType = "Kakuhou", Name = kakuName, Type = enemy.Kagune, Str = enemy.Strength, Spd = enemy.Speed, Def = enemy.Defence, Mutation = enemy.Mutation }
-				DataManager.GiveItem(player, kakuData); Network.notify(player, "Harvested a " .. kakuName .. "!", Color3.fromRGB(200, 50, 255))
+				local kakuData = { ItemType = "Kakuhou", Name = kakuName, Type = enemy.Kagune, Str = enemy.Strength, Spd = enemy.Speed, Def = enemy.Defence, Mutation = enemy.Mutation, IsArata = isArata }
+				DataManager.GiveItem(player, kakuData)
+
+				if isArata then
+					Network.notify(player, "Harvested an Arata-Grade Kakuhou!", Color3.fromRGB(255, 100, 100))
+				else
+					Network.notify(player, "Harvested a " .. kakuName .. "!", Color3.fromRGB(200, 50, 255))
+				end
 			end
 		end
 		CombatManager.ActiveBattles[player] = nil; folder.CurrentStamina.Value = folder.Stamina.Value; folder.ArataActive.Value = false; folder.ArataHasEaten.Value = false
