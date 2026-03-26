@@ -1,5 +1,6 @@
 -- @ScriptType: ModuleScript
 local InventoryTab = {}
+local SFXManager = require(game:GetService("Players").LocalPlayer:WaitForChild("PlayerScripts"):WaitForChild("SFXManager"))
 
 function InventoryTab.Refresh(frame, GameConfig, InventoryEvent, playerData, factionData, HttpService)
 	local fac = factionData.Value; if fac == "Unchosen" then return end
@@ -15,7 +16,7 @@ function InventoryTab.Refresh(frame, GameConfig, InventoryEvent, playerData, fac
 		fObj.Changed:Connect(function(newVal) val.Text = tostring(newVal) end)
 
 		local useBtn = Instance.new("TextButton"); useBtn.Size = UDim2.new(0.3, 0, 0.8, 0); useBtn.Position = UDim2.new(0.65, 0, 0.1, 0); useBtn.Text = "Consume (+30 Hunger)"; useBtn.Font = Enum.Font.GothamBold; useBtn.TextSize = 18; useBtn.BackgroundColor3 = Color3.fromRGB(150, 50, 50); useBtn.TextColor3 = Color3.fromRGB(255, 255, 255); useBtn.Parent = row
-		useBtn.MouseButton1Click:Connect(function() InventoryEvent:FireServer("ConsumeFlesh") end)
+		useBtn.MouseButton1Click:Connect(function() SFXManager.Play("Click"); InventoryEvent:FireServer("ConsumeFlesh") end)
 	end
 
 	local invFolder = playerData:WaitForChild("Inventory")
@@ -31,17 +32,17 @@ function InventoryTab.Refresh(frame, GameConfig, InventoryEvent, playerData, fac
 				if fac == "CCG" then
 					if data.Name == "Kakuja Kakuhou" then
 						local arataBtn = Instance.new("TextButton"); arataBtn.Size = UDim2.new(0.3, 0, 0.8, 0); arataBtn.Position = UDim2.new(0.65, 0, 0.1, 0); arataBtn.Text = "Forge Arata Armor"; arataBtn.Font = Enum.Font.GothamBold; arataBtn.TextSize = 16; arataBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50); arataBtn.TextColor3 = Color3.fromRGB(255, 255, 255); arataBtn.Parent = row
-						arataBtn.MouseButton1Click:Connect(function() InventoryEvent:FireServer("CraftArata", item.Name) end)
+						arataBtn.MouseButton1Click:Connect(function() SFXManager.Play("Click"); InventoryEvent:FireServer("CraftArata", item.Name) end)
 					else
 						local craftBtn = Instance.new("TextButton"); craftBtn.Size = UDim2.new(0.18, 0, 0.8, 0); craftBtn.Position = UDim2.new(0.58, 0, 0.1, 0); craftBtn.Text = "Craft Quinque"; craftBtn.Font = Enum.Font.GothamBold; craftBtn.TextSize = 14; craftBtn.BackgroundColor3 = Color3.fromRGB(150, 100, 30); craftBtn.TextColor3 = Color3.fromRGB(255, 255, 255); craftBtn.Parent = row
-						craftBtn.MouseButton1Click:Connect(function() InventoryEvent:FireServer("CraftQuinque", item.Name) end)
+						craftBtn.MouseButton1Click:Connect(function() SFXManager.Play("Click"); InventoryEvent:FireServer("CraftQuinque", item.Name) end)
 
 						local repairBtn = Instance.new("TextButton"); repairBtn.Size = UDim2.new(0.18, 0, 0.8, 0); repairBtn.Position = UDim2.new(0.78, 0, 0.1, 0); repairBtn.Text = "Repair Eqp."; repairBtn.Font = Enum.Font.GothamBold; repairBtn.TextSize = 14; repairBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 50); repairBtn.TextColor3 = Color3.fromRGB(255, 255, 255); repairBtn.Parent = row
-						repairBtn.MouseButton1Click:Connect(function() InventoryEvent:FireServer("RepairQuinque", item.Name) end)
+						repairBtn.MouseButton1Click:Connect(function() SFXManager.Play("Click"); InventoryEvent:FireServer("RepairQuinque", item.Name) end)
 					end
 				else
 					local rollBtn = Instance.new("TextButton"); rollBtn.Size = UDim2.new(0.3, 0, 0.8, 0); rollBtn.Position = UDim2.new(0.65, 0, 0.1, 0); rollBtn.Text = "Roll Kagune (Resets Lvl)"; rollBtn.Font = Enum.Font.GothamBold; rollBtn.TextSize = 14; rollBtn.BackgroundColor3 = Color3.fromRGB(150, 30, 30); rollBtn.TextColor3 = Color3.fromRGB(255, 255, 255); rollBtn.Parent = row
-					rollBtn.MouseButton1Click:Connect(function() InventoryEvent:FireServer("RollKagune", item.Name) end)
+					rollBtn.MouseButton1Click:Connect(function() SFXManager.Play("Click"); InventoryEvent:FireServer("RollKagune", item.Name) end)
 				end
 			elseif data.ItemType == "Quinque" or data.ItemType == "Arata" then
 				if data.ItemType == "Quinque" then 
@@ -59,10 +60,10 @@ function InventoryTab.Refresh(frame, GameConfig, InventoryEvent, playerData, fac
 
 				local equipBtn = Instance.new("TextButton"); equipBtn.Size = UDim2.new(0.18, 0, 0.8, 0); equipBtn.Position = UDim2.new(0.58, 0, 0.1, 0); equipBtn.Font = Enum.Font.GothamBold; equipBtn.TextSize = 16; equipBtn.Parent = row
 				if isEquipped then equipBtn.Text = "EQUIPPED"; equipBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50); equipBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-				else equipBtn.Text = "Equip"; equipBtn.BackgroundColor3 = Color3.fromRGB(50, 100, 200); equipBtn.TextColor3 = Color3.fromRGB(255, 255, 255); equipBtn.MouseButton1Click:Connect(function() InventoryEvent:FireServer("EquipItem", item.Name) end) end
+				else equipBtn.Text = "Equip"; equipBtn.BackgroundColor3 = Color3.fromRGB(50, 100, 200); equipBtn.TextColor3 = Color3.fromRGB(255, 255, 255); equipBtn.MouseButton1Click:Connect(function() SFXManager.Play("Click"); InventoryEvent:FireServer("EquipItem", item.Name) end) end
 
 				local retireBtn = Instance.new("TextButton"); retireBtn.Size = UDim2.new(0.18, 0, 0.8, 0); retireBtn.Position = UDim2.new(0.78, 0, 0.1, 0); retireBtn.Text = "Retire"; retireBtn.Font = Enum.Font.GothamBold; retireBtn.TextSize = 16; retireBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50); retireBtn.TextColor3 = Color3.fromRGB(255, 255, 255); retireBtn.Parent = row
-				retireBtn.MouseButton1Click:Connect(function() InventoryEvent:FireServer("RetireItem", item.Name) end)
+				retireBtn.MouseButton1Click:Connect(function() SFXManager.Play("Click"); InventoryEvent:FireServer("RetireItem", item.Name) end)
 			end
 		end
 	end
