@@ -66,6 +66,8 @@ local GameConfig = {
 	QuinquePrefixes = {"Yuki", "Dou", "Kura", "Naru", "Sha", "Abura", "Fue", "Ama", "Yama", "Ara", "Ii", "Chi", "Taru", "Ka", "Zebi", "Na", "Ro", "Tsu", "Boku", "Sen", "Bu", "Te", "A", "Gin", "Oni", "No", "Kuro", "Shiro", "Aka", "Ao", "Ryu", "Tora", "Kaze", "Mizu", "Hoshi", "Tsuki", "Kiri", "Kage", "Sora", "Ten", "Zan", "Geki", "Shin", "Baku", "Retsu", "Koku", "Byaku", "En", "Kaku", "Zetsu", "Gen", "Mei", "Kyomu", "Heki", "Mura", "Yami", "Rai", "Hyaku", "Man", "Kyuu", "Ren", "Shou", "Gou", "Rin"},
 	QuinqueSuffixes = {"", "mura", "jima", "kami", "ku", "gama", "guchi", "tsu", "da", "ta", "tsuu", "she", "hi", "jiri", "zu", "gomi", "nagi", "satsu", "za", "ru", "toro", "jite", "kui", "maru", "yama", "gawa", "sawa", "zaki", "bashi", "ki", "ko", "do", "ro", "jin", "shi", "tou", "ken", "sen", "ryuu", "nochi", "gami", "zawa", "bito", "dachi", "hoshi", "ishi", "numa", "hara", "wara", "mizu", "shiro", "kuro", "dori", "tachi", "yari", "kaze", "bi", "goku"},
 	KaguneMutations = {"None", "None", "None", "Electric Generation", "Flame Generation", "Virus Generation", "Exploding Cells", "Life Draining", "Detached Kagune"},
-	MutationRollChance = 20
+	MutationRollChance = 20,
+	WardKillsToShift = 10,
+	WardPassiveTickRate = 300
 }
 return GameConfig
