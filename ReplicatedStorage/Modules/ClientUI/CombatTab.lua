@@ -29,6 +29,7 @@ function CombatTab.Build(frame, CombatEvent, playerData, factionData, GameConfig
 		local wardVal = dynWards:FindFirstChild(w.Key)
 		local function updateBtnText()
 			local risk = wardVal and wardVal.Value or 1
+			local reqKills = math.max(1, math.floor(risk * 2))
 
 			local ccgKills = wardVal and wardVal:FindFirstChild("CCGKills")
 			local ghoulKills = wardVal and wardVal:FindFirstChild("GhoulKills")
@@ -38,9 +39,9 @@ function CombatTab.Build(frame, CombatEvent, playerData, factionData, GameConfig
 			local fac = factionData.Value
 			local progStr = ""
 			if fac == "CCG" then
-				progStr = " | Securing: " .. cKills .. "/" .. GameConfig.WardKillsToShift
+				progStr = " | Securing: " .. cKills .. "/" .. reqKills
 			elseif fac == "GHOUL" then
-				progStr = " | Terror: " .. gKills .. "/" .. GameConfig.WardKillsToShift
+				progStr = " | Terror: " .. gKills .. "/" .. reqKills
 			end
 
 			btn.Text = w.Data.Name .. " (Risk: " .. string.format("%.1fx", risk) .. ")" .. progStr
@@ -83,6 +84,7 @@ function CombatTab.Build(frame, CombatEvent, playerData, factionData, GameConfig
 		local baseData = GameConfig.Wards[wName]
 		local val = dynWards and dynWards:FindFirstChild(wName)
 		local risk = val and val.Value or 1
+		local reqKills = math.max(1, math.floor(risk * 2))
 
 		local ccgKills = val and val:FindFirstChild("CCGKills")
 		local ghoulKills = val and val:FindFirstChild("GhoulKills")
@@ -92,9 +94,9 @@ function CombatTab.Build(frame, CombatEvent, playerData, factionData, GameConfig
 		local fac = factionData.Value
 		local progStr = ""
 		if fac == "CCG" then
-			progStr = " | Securing: " .. cKills .. "/" .. GameConfig.WardKillsToShift
+			progStr = " | Securing: " .. cKills .. "/" .. reqKills
 		elseif fac == "GHOUL" then
-			progStr = " | Terror: " .. gKills .. "/" .. GameConfig.WardKillsToShift
+			progStr = " | Terror: " .. gKills .. "/" .. reqKills
 		end
 
 		local timerStr = ""
