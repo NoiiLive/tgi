@@ -1,6 +1,8 @@
 -- @ScriptType: ModuleScript
+-- @ScriptType: ModuleScript
 local CombatTab = { UI = {} }
 local task = task
+local SFXManager = require(game:GetService("Players").LocalPlayer:WaitForChild("PlayerScripts"):WaitForChild("SFXManager"))
 
 function CombatTab.Build(frame, CombatEvent, playerData, factionData, GameConfig)
 	CombatTab.UI.WardBtn = Instance.new("TextButton"); CombatTab.UI.WardBtn.Size = UDim2.new(0.6, 0, 0, 50); CombatTab.UI.WardBtn.Position = UDim2.new(0.2, 0, 0.28, 0); CombatTab.UI.WardBtn.Font = Enum.Font.GothamBold; CombatTab.UI.WardBtn.TextSize = 16; CombatTab.UI.WardBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60); CombatTab.UI.WardBtn.TextColor3 = Color3.fromRGB(200, 200, 255); CombatTab.UI.WardBtn.Text = "Current Patrol: 20th Ward"; CombatTab.UI.WardBtn.Parent = frame
@@ -12,7 +14,10 @@ function CombatTab.Build(frame, CombatEvent, playerData, factionData, GameConfig
 	local topPadding = Instance.new("UIPadding", CombatTab.UI.MapPanel); topPadding.PaddingTop = UDim.new(0, 10); topPadding.PaddingBottom = UDim.new(0, 10)
 
 	local closeMapBtn = Instance.new("TextButton"); closeMapBtn.Size = UDim2.new(0.95, 0, 0, 50); closeMapBtn.Text = "Close Map"; closeMapBtn.Font = Enum.Font.GothamBold; closeMapBtn.TextSize = 20; closeMapBtn.BackgroundColor3 = Color3.fromRGB(150, 50, 50); closeMapBtn.TextColor3 = Color3.fromRGB(255, 255, 255); closeMapBtn.LayoutOrder = -1; closeMapBtn.ZIndex = 51; closeMapBtn.Parent = CombatTab.UI.MapPanel
-	closeMapBtn.MouseButton1Click:Connect(function() CombatTab.UI.MapPanel.Visible = false; CombatTab.UI.WardBtn.Visible = true; CombatTab.UI.SearchBtn.Visible = true end)
+	closeMapBtn.MouseButton1Click:Connect(function() 
+		SFXManager.Play("Click")
+		CombatTab.UI.MapPanel.Visible = false; CombatTab.UI.WardBtn.Visible = true; CombatTab.UI.SearchBtn.Visible = true 
+	end)
 
 	local sortedWards = {}
 	for key, data in pairs(GameConfig.Wards) do
@@ -63,6 +68,7 @@ function CombatTab.Build(frame, CombatEvent, playerData, factionData, GameConfig
 		updateBtnText()
 
 		btn.MouseButton1Click:Connect(function()
+			SFXManager.Play("Click")
 			CombatEvent:FireServer("ChangeWard", w.Key)
 			CombatTab.UI.MapPanel.Visible = false; CombatTab.UI.WardBtn.Visible = true; CombatTab.UI.SearchBtn.Visible = true
 		end)
@@ -126,29 +132,57 @@ function CombatTab.Build(frame, CombatEvent, playerData, factionData, GameConfig
 	end)
 
 	CombatTab.UI.WardBtn.MouseButton1Click:Connect(function()
+		SFXManager.Play("Click")
 		CombatTab.UI.WardBtn.Visible = false
 		CombatTab.UI.SearchBtn.Visible = false
 		CombatTab.UI.MapPanel.Visible = true
 	end)
 
-	CombatTab.UI.SearchBtn.MouseButton1Click:Connect(function() CombatTab.UI.SearchBtn.Visible = false; CombatTab.UI.WardBtn.Visible = false; CombatEvent:FireServer("Search") end)
-	CombatTab.UI.AttackBtn.MouseButton1Click:Connect(function() CombatEvent:FireServer("Attack") end)
-	CombatTab.UI.EatFleshBtn.MouseButton1Click:Connect(function() CombatEvent:FireServer("ConsumeFlesh") end)
-	CombatTab.UI.RestBtn.MouseButton1Click:Connect(function() CombatEvent:FireServer("Rest") end)
-	CombatTab.UI.ArataBtn.MouseButton1Click:Connect(function() CombatEvent:FireServer("ToggleArata") end)
-	CombatTab.UI.FleeBtn.MouseButton1Click:Connect(function() CombatEvent:FireServer("Flee") end)
+	CombatTab.UI.SearchBtn.MouseButton1Click:Connect(function() SFXManager.Play("Click"); CombatTab.UI.SearchBtn.Visible = false; CombatTab.UI.WardBtn.Visible = false; CombatEvent:FireServer("Search") end)
+	CombatTab.UI.AttackBtn.MouseButton1Click:Connect(function() SFXManager.Play("Click"); CombatEvent:FireServer("Attack") end)
+	CombatTab.UI.EatFleshBtn.MouseButton1Click:Connect(function() SFXManager.Play("Click"); CombatEvent:FireServer("ConsumeFlesh") end)
+	CombatTab.UI.RestBtn.MouseButton1Click:Connect(function() SFXManager.Play("Click"); CombatEvent:FireServer("Rest") end)
+	CombatTab.UI.ArataBtn.MouseButton1Click:Connect(function() SFXManager.Play("Click"); CombatEvent:FireServer("ToggleArata") end)
+	CombatTab.UI.FleeBtn.MouseButton1Click:Connect(function() SFXManager.Play("Click"); CombatEvent:FireServer("Flee") end)
 
 	CombatEvent.OnClientEvent:Connect(function(action, data1, data2)
 		if action == "BattleStarted" then
+			SFXManager.Play("CombatUtility")
 			CombatTab.UI.BattleArena.Visible = true; CombatTab.UI.WardBtn.Visible = false; CombatTab.UI.SearchBtn.Visible = false; CombatTab.UI.MapPanel.Visible = false; CombatTab.UI.FleeBtn.Visible = true
 			for _, child in pairs(CombatTab.UI.CombatLog:GetChildren()) do if child:IsA("TextLabel") then child:Destroy() end end
 			CombatTab.UI.EnemyLabel.Text = data1.Name .. " HP: " .. data1.CurrentHealth .. " / " .. data1.MaxHealth; CombatTab.UpdateStats(playerData, factionData)
 			CombatTab.AddLog("Encountered " .. data1.Name .. "!")
 		elseif action == "TurnUpdate" then
 			CombatTab.UI.EnemyLabel.Text = data1.Name .. " HP: " .. data1.CurrentHealth .. " / " .. data1.MaxHealth; CombatTab.UpdateStats(playerData, factionData)
-			for _, str in ipairs(data2) do CombatTab.AddLog(str) end
+			local playedHit = false
+			for _, str in ipairs(data2) do 
+				CombatTab.AddLog(str)
+				if not playedHit and string.find(string.lower(str), "damage") then
+					SFXManager.Play("CombatHit")
+					playedHit = true
+				end
+			end
 		elseif action == "BattleEnded" then
-			CombatTab.UpdateStats(playerData, factionData); for _, str in ipairs(data1) do CombatTab.AddLog(str) end
+			CombatTab.UpdateStats(playerData, factionData)
+
+			local isVictory = false
+			local isDefeat = false
+
+			for _, str in ipairs(data1) do 
+				CombatTab.AddLog(str)
+				local lowerStr = string.lower(str)
+				if string.find(lowerStr, "enemy defeated") then isVictory = true end
+				if string.find(lowerStr, "you were defeated") then isDefeat = true end
+			end
+
+			if isVictory then 
+				SFXManager.Play("CombatVictory")
+			elseif isDefeat then 
+				SFXManager.Play("CombatDefeat")
+			else 
+				SFXManager.Play("CombatUtility") -- Fleeing case
+			end
+
 			CombatTab.UI.AttackBtn.Visible = false; CombatTab.UI.EatFleshBtn.Visible = false; CombatTab.UI.RestBtn.Visible = false; CombatTab.UI.ArataBtn.Visible = false; CombatTab.UI.FleeBtn.Visible = false
 			task.wait(3) 
 			CombatTab.UI.BattleArena.Visible = false; CombatTab.UI.AttackBtn.Visible = true; CombatTab.UI.SearchBtn.Visible = true; CombatTab.UI.WardBtn.Visible = true; CombatTab.UpdateStats(playerData, factionData)
