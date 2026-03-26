@@ -58,9 +58,13 @@ function InventoryManager.Init(params)
 			if targetItem then
 				local kData = HttpService:JSONDecode(targetItem.Value)
 				if kData.ItemType == "Kakuhou" and kData.Name == "Kakuja Kakuhou" then
-					local randName = GameConfig.QuinquePrefixes[math.random(1, #GameConfig.QuinquePrefixes)] .. GameConfig.QuinqueSuffixes[math.random(1, #GameConfig.QuinqueSuffixes)]
-					local aData = { ItemType = "Arata", Name = "Proto-" .. randName .. " Armor", Str = math.floor(kData.Str * 2), Spd = math.floor(kData.Spd * 2), Def = math.floor(kData.Def * 2) }
-					DataManager.GiveItem(player, aData); targetItem:Destroy(); Network.notify(player, "Forged " .. aData.Name .. "!", Color3.fromRGB(255, 50, 50))
+					if kData.IsArata then
+						local randName = GameConfig.QuinquePrefixes[math.random(1, #GameConfig.QuinquePrefixes)] .. GameConfig.QuinqueSuffixes[math.random(1, #GameConfig.QuinqueSuffixes)]
+						local aData = { ItemType = "Arata", Name = "Proto-" .. randName .. " Armor", Str = math.floor(kData.Str * 2), Spd = math.floor(kData.Spd * 2), Def = math.floor(kData.Def * 2) }
+						DataManager.GiveItem(player, aData); targetItem:Destroy(); Network.notify(player, "Forged " .. aData.Name .. "!", Color3.fromRGB(255, 50, 50))
+					else
+						Network.notify(player, "Kakuhou lacks Arata traits!", Color3.fromRGB(255, 50, 50))
+					end
 				end
 			end
 
