@@ -45,8 +45,10 @@ FactionEvent.OnServerEvent:Connect(function(player, choice)
 	if folder and folder.Faction.Value == "Unchosen" then 
 		folder.Faction.Value = choice 
 		if choice == "GHOUL" then 
+			folder.PatrolWard.Value = "20th Ward"
 			folder.Kagune.Value = DataManager.GenerateKagune() 
 		elseif choice == "CCG" then
+			folder.PatrolWard.Value = "1st Ward"
 			local standardIssue = { ItemType = "Quinque", Name = "Standard Issue", Type = "Bikaku", Weapon = "Sword", Str = 5, Spd = 2, Mutation = "None", Creator = "CCG Quartermaster", Durability = 50, MaxDurability = 50, Broken = false, Id = "Item_"..HttpService:GenerateGUID(false) }
 			DataManager.GiveItem(player, standardIssue)
 			folder.EquippedQuinque.Value = HttpService:JSONEncode(standardIssue)
