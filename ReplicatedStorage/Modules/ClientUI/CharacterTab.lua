@@ -1,6 +1,8 @@
 -- @ScriptType: ModuleScript
+-- @ScriptType: ModuleScript
 local CharacterTab = { CurrentTraining = nil, ActiveTween = nil }
 local TweenService = game:GetService("TweenService")
+local SFXManager = require(game:GetService("Players").LocalPlayer:WaitForChild("PlayerScripts"):WaitForChild("SFXManager"))
 
 function CharacterTab.Refresh(frame, GameConfig, TrainingEvent, playerData, factionData, HttpService)
 	local fac = factionData.Value; if fac == "Unchosen" then return end
@@ -75,6 +77,7 @@ function CharacterTab.Refresh(frame, GameConfig, TrainingEvent, playerData, fact
 			end
 
 			btn.MouseButton1Click:Connect(function()
+				SFXManager.Play("Click")
 				TrainingEvent:FireServer("ToggleTraining", stat)
 
 				if CharacterTab.ActiveTween then 
@@ -109,11 +112,11 @@ function CharacterTab.Refresh(frame, GameConfig, TrainingEvent, playerData, fact
 			else promBtn.Text = "Special Class\n(Max Rank Achieved)"; promBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100) end
 		end
 		if playerData:FindFirstChild("CCGRankIndex") then playerData.CCGRankIndex.Changed:Connect(updatePromBtn); updatePromBtn() end
-		promBtn.MouseButton1Click:Connect(function() TrainingEvent:FireServer("PromoteCCG") end)
+		promBtn.MouseButton1Click:Connect(function() SFXManager.Play("Click"); TrainingEvent:FireServer("PromoteCCG") end)
 	else
 		for _, stat in ipairs(GameConfig.TrainingStats.GHOUL) do
 			local btn = Instance.new("TextButton"); btn.Text = "Upgrade " .. stat .. "\n(" .. GameConfig.GhoulStatCost .. " RC)"; btn.Font = Enum.Font.GothamBold; btn.TextSize = 20; btn.BackgroundColor3 = Color3.fromRGB(80, 20, 20); btn.TextColor3 = Color3.fromRGB(255,255,255); btn.Parent = tCont
-			btn.MouseButton1Click:Connect(function() TrainingEvent:FireServer("UpgradeStat", stat) end)
+			btn.MouseButton1Click:Connect(function() SFXManager.Play("Click"); TrainingEvent:FireServer("UpgradeStat", stat) end)
 		end
 		local lvlUpBtn = Instance.new("TextButton"); lvlUpBtn.Font = Enum.Font.GothamBlack; lvlUpBtn.TextSize = 20; lvlUpBtn.BackgroundColor3 = Color3.fromRGB(30, 150, 30); lvlUpBtn.TextColor3 = Color3.fromRGB(255,255,255); lvlUpBtn.Parent = tCont
 		local function updateLvlBtn()
@@ -121,9 +124,9 @@ function CharacterTab.Refresh(frame, GameConfig, TrainingEvent, playerData, fact
 			lvlUpBtn.Text = "Level Up Kagune\n(" .. (currentLvl * 50) .. " RC)"
 		end
 		playerData:WaitForChild("KaguneLevel").Changed:Connect(updateLvlBtn); updateLvlBtn()
-		lvlUpBtn.MouseButton1Click:Connect(function() TrainingEvent:FireServer("LevelUpKagune") end)
+		lvlUpBtn.MouseButton1Click:Connect(function() SFXManager.Play("Click"); TrainingEvent:FireServer("LevelUpKagune") end)
 		local kakujaBtn = Instance.new("TextButton"); kakujaBtn.Text = "Evolve Kakuja\n(Req: Kagune Lv.10)"; kakujaBtn.Font = Enum.Font.GothamBlack; kakujaBtn.TextSize = 18; kakujaBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0); kakujaBtn.TextColor3 = Color3.fromRGB(255,255,255); kakujaBtn.Parent = tCont
-		kakujaBtn.MouseButton1Click:Connect(function() TrainingEvent:FireServer("EvolveKakuja") end)
+		kakujaBtn.MouseButton1Click:Connect(function() SFXManager.Play("Click"); TrainingEvent:FireServer("EvolveKakuja") end)
 	end
 end
 return CharacterTab
