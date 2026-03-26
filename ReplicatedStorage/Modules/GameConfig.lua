@@ -9,7 +9,7 @@ local GameConfig = {
 
 		EquippedQuinque = '{"Name":"Unarmed","ItemType":"Quinque","Type":"None","Weapon":"Fists","Str":1,"Spd":1,"Mutation":"None","Durability":999,"MaxDurability":999,"Broken":false,"Id":"Unarmed"}',
 
-		CCGRankIndex = 1, PatrolWard = "20th Ward", EquippedArata = "None"
+		CCGRankIndex = 1, PatrolWard = "1st Ward", EquippedArata = "None"
 	},
 
 	DisplayStats = {
