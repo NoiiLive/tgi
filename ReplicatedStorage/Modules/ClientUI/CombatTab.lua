@@ -1,5 +1,4 @@
 -- @ScriptType: ModuleScript
--- @ScriptType: ModuleScript
 local CombatTab = { UI = {} }
 local task = task
 local TweenService = game:GetService("TweenService")
@@ -240,10 +239,11 @@ function CombatTab.Build(frame, CombatEvent, playerData, factionData, GameConfig
 				TweenService:Create(CombatTab.UI.EnemyHPFill, TweenInfo.new(0.3), {Size = UDim2.new(math.clamp(CombatTab.VisualEnemyHP / CombatTab.CurrentEnemyMaxHP, 0, 1), 0, 1, 0)}):Play()
 
 				CombatTab.VisualPlayerHP = playerData:FindFirstChild("CurrentHealth") and playerData.CurrentHealth.Value or 100
-				CombatTab.UpdateStats(playerData, factionData)
 
 				CombatTab.UI.AttackBtn.Visible = true
 				CombatTab.UI.FleeBtn.Visible = true
+
+				CombatTab.UpdateStats(playerData, factionData)
 			end)
 		elseif action == "BattleEnded" then
 			PlayLogSequence(data1, function()
@@ -257,6 +257,10 @@ function CombatTab.Build(frame, CombatEvent, playerData, factionData, GameConfig
 				end
 
 				CombatTab.VisualPlayerHP = playerData:FindFirstChild("CurrentHealth") and playerData.CurrentHealth.Value or 100
+
+				CombatTab.UI.AttackBtn.Visible = true
+				CombatTab.UI.FleeBtn.Visible = true
+
 				CombatTab.UpdateStats(playerData, factionData)
 
 				if isVictory then 
@@ -316,7 +320,7 @@ function CombatTab.ShakeScreen()
 	local basePos = UDim2.new(0.05, 0, 0.15, 0)
 	task.spawn(function()
 		for i = 1, 5 do
-			arena.Position = basePos + UDim2.new(0, math.random(-8, 8) / 1000, 0, math.random(-8, 8) / 1000)
+			arena.Position = basePos + UDim2.new(0, math.random(-8, 8), 0, math.random(-8, 8))
 			task.wait(0.04)
 		end
 		arena.Position = basePos
