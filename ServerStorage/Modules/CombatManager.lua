@@ -1,4 +1,5 @@
 -- @ScriptType: ModuleScript
+-- @ScriptType: ModuleScript
 local CombatManager = { ActiveBattles = {} }
 local HttpService = game:GetService("HttpService")
 
@@ -6,6 +7,20 @@ local GameConfig, EnemyConfig, CombatEvent, Network, DataManager
 
 function CombatManager.Init(params)
 	GameConfig = params.GameConfig; EnemyConfig = params.EnemyConfig; CombatEvent = params.CombatEvent; Network = params.Network; DataManager = params.DataManager
+
+	local RS = game:GetService("ReplicatedStorage")
+	local dynamicWards = RS:FindFirstChild("DynamicWards")
+	if not dynamicWards then
+		dynamicWards = Instance.new("Folder")
+		dynamicWards.Name = "DynamicWards"
+		dynamicWards.Parent = RS
+		for wardName, _ in pairs(GameConfig.Wards) do
+			local val = Instance.new("NumberValue")
+			val.Name = wardName
+			val.Value = math.random(10, 50) / 10
+			val.Parent = dynamicWards
+		end
+	end
 
 	CombatEvent.OnServerEvent:Connect(function(player, action, value)
 		local folder = player:FindFirstChild("PlayerData")
@@ -45,16 +60,19 @@ function CombatManager.GenerateEnemy(player)
 	local template = EnemyConfig.Enemies[math.random(1, #EnemyConfig.Enemies)]
 	local folder = player:FindFirstChild("PlayerData")
 	local wardMult = 1
+
 	if folder and folder:FindFirstChild("PatrolWard") then
-		local wData = GameConfig.Wards[folder.PatrolWard.Value]; if wData then wardMult = wData.Mult end
+		local dynWards = game:GetService("ReplicatedStorage"):FindFirstChild("DynamicWards")
+		local wVal = dynWards and dynWards:FindFirstChild(folder.PatrolWard.Value)
+		if wVal then wardMult = wVal.Value end
 	end
 
-	local hp = math.random(template.MinHP, template.MaxHP) * wardMult
+	local hp = math.floor(math.random(template.MinHP, template.MaxHP) * wardMult)
 	CombatManager.ActiveBattles[player] = { 
 		Name = template.Name, MaxHealth = hp, CurrentHealth = hp, 
-		Strength = math.random(template.MinStr, template.MaxStr) * wardMult, 
-		Speed = math.random(template.MinSpd, template.MaxSpd) * wardMult, 
-		Defence = math.random(template.MinDef, template.MaxDef) * wardMult,
+		Strength = math.floor(math.random(template.MinStr, template.MaxStr) * wardMult), 
+		Speed = math.floor(math.random(template.MinSpd, template.MaxSpd) * wardMult), 
+		Defence = math.floor(math.random(template.MinDef, template.MaxDef) * wardMult),
 		Kagune = DataManager.GenerateKagune(), 
 		Mutation = GameConfig.KaguneMutations[math.random(1, #GameConfig.KaguneMutations)], WardMult = wardMult
 	}
@@ -149,9 +167,9 @@ function CombatManager.ProcessTurn(player, actionType)
 		end
 	end
 
-	local actualEnemyDamage = math.max(1, enemyDamage - playerDefence)
+	local actualEnemyDamage = math.floor(math.max(1, enemyDamage - playerDefence))
 	if actionType == "Attack" then
-		local actualPlayerDamage = math.max(1, playerDamage - enemy.Defence)
+		local actualPlayerDamage = math.floor(math.max(1, playerDamage - enemy.Defence))
 		if playerSpeed >= enemy.Speed then
 			enemy.CurrentHealth -= actualPlayerDamage; table.insert(log, "You struck first for " .. actualPlayerDamage .. " damage!")
 			if (folder.Faction.Value == "GHOUL" and folder.KaguneMutation.Value == "Life Draining") or (folder.Faction.Value == "CCG" and HttpService:JSONDecode(folder.EquippedQuinque.Value).Mutation == "Life Draining") then
@@ -173,6 +191,18 @@ function CombatManager.ProcessTurn(player, actionType)
 		table.insert(log, "You were defeated..."); CombatManager.ActiveBattles[player] = nil; folder.CurrentHealth.Value = folder.MaxHealth.Value; folder.CurrentStamina.Value = folder.Stamina.Value; folder.ArataActive.Value = false; folder.ArataHasEaten.Value = false
 		CombatEvent:FireClient(player, "BattleEnded", log)
 	elseif enemy.CurrentHealth <= 0 then
+		local dynWards = game:GetService("ReplicatedStorage"):FindFirstChild("DynamicWards")
+		if dynWards and folder:FindFirstChild("PatrolWard") then
+			local wVal = dynWards:FindFirstChild(folder.PatrolWard.Value)
+			if wVal then
+				if folder.Faction.Value == "CCG" then
+					wVal.Value = math.max(1.0, wVal.Value - 0.1)
+				elseif folder.Faction.Value == "GHOUL" then
+					wVal.Value = math.min(5.0, wVal.Value + 0.1)
+				end
+			end
+		end
+
 		table.insert(log, "Enemy defeated!")
 		local wMult = enemy.WardMult or 1; local repGain = math.floor(math.random(EnemyConfig.LootRates.ReputationMin, EnemyConfig.LootRates.ReputationMax) * wMult)
 		folder.Reputation.Value += repGain; folder.Kills.Value += 1
