@@ -1,5 +1,4 @@
 -- @ScriptType: ModuleScript
--- @ScriptType: ModuleScript
 local CombatManager = { ActiveBattles = {} }
 local HttpService = game:GetService("HttpService")
 
@@ -50,6 +49,27 @@ function CombatManager.Init(params)
 					for _, wVal in ipairs(dynWards:GetChildren()) do
 						if wVal:IsA("NumberValue") then
 							wVal.Value = math.min(5.0, wVal.Value + 0.1)
+						end
+					end
+				end
+			end
+		end
+	end)
+
+	task.spawn(function()
+		local Players = game:GetService("Players")
+		while true do
+			task.wait(2)
+			for _, player in ipairs(Players:GetPlayers()) do
+				if not CombatManager.ActiveBattles[player] then
+					local folder = player:FindFirstChild("PlayerData")
+					if folder and folder:FindFirstChild("CurrentHealth") and folder:FindFirstChild("MaxHealth") then
+						if folder.CurrentHealth.Value > 0 and folder.CurrentHealth.Value < folder.MaxHealth.Value then
+							local healAmount = 5
+							if folder:FindFirstChild("Regeneration") then
+								healAmount = folder.Regeneration.Value
+							end
+							folder.CurrentHealth.Value = math.min(folder.MaxHealth.Value, folder.CurrentHealth.Value + healAmount)
 						end
 					end
 				end
@@ -159,10 +179,11 @@ function CombatManager.ProcessTurn(player, actionType)
 				if dynWards and folder:FindFirstChild("PatrolWard") then
 					local wVal = dynWards:FindFirstChild(folder.PatrolWard.Value)
 					if wVal and wVal:IsA("NumberValue") then
+						local reqKills = math.max(1, math.floor(wVal.Value * 2))
 						local ghoulKills = wVal:FindFirstChild("GhoulKills")
 						if ghoulKills then
 							ghoulKills.Value += 1
-							if ghoulKills.Value >= GameConfig.WardKillsToShift then
+							if ghoulKills.Value >= reqKills then
 								ghoulKills.Value = 0
 								wVal.Value = math.min(5.0, wVal.Value + 0.1)
 							end
@@ -255,11 +276,12 @@ function CombatManager.ProcessTurn(player, actionType)
 		if dynWards and folder:FindFirstChild("PatrolWard") then
 			local wVal = dynWards:FindFirstChild(folder.PatrolWard.Value)
 			if wVal and wVal:IsA("NumberValue") then
+				local reqKills = math.max(1, math.floor(wVal.Value * 2))
 				if folder.Faction.Value == "CCG" then
 					local ghoulKills = wVal:FindFirstChild("GhoulKills")
 					if ghoulKills then
 						ghoulKills.Value += 1
-						if ghoulKills.Value >= GameConfig.WardKillsToShift then
+						if ghoulKills.Value >= reqKills then
 							ghoulKills.Value = 0
 							wVal.Value = math.min(5.0, wVal.Value + 0.1)
 						end
@@ -268,7 +290,7 @@ function CombatManager.ProcessTurn(player, actionType)
 					local ccgKills = wVal:FindFirstChild("CCGKills")
 					if ccgKills then
 						ccgKills.Value += 1
-						if ccgKills.Value >= GameConfig.WardKillsToShift then
+						if ccgKills.Value >= reqKills then
 							ccgKills.Value = 0
 							wVal.Value = math.max(1.0, wVal.Value - 0.1)
 						end
@@ -284,11 +306,12 @@ function CombatManager.ProcessTurn(player, actionType)
 		if dynWards and folder:FindFirstChild("PatrolWard") then
 			local wVal = dynWards:FindFirstChild(folder.PatrolWard.Value)
 			if wVal and wVal:IsA("NumberValue") then
+				local reqKills = math.max(1, math.floor(wVal.Value * 2))
 				if folder.Faction.Value == "CCG" then
 					local ccgKills = wVal:FindFirstChild("CCGKills")
 					if ccgKills then
 						ccgKills.Value += 1
-						if ccgKills.Value >= GameConfig.WardKillsToShift then
+						if ccgKills.Value >= reqKills then
 							ccgKills.Value = 0
 							wVal.Value = math.max(1.0, wVal.Value - 0.1)
 						end
@@ -297,7 +320,7 @@ function CombatManager.ProcessTurn(player, actionType)
 					local ghoulKills = wVal:FindFirstChild("GhoulKills")
 					if ghoulKills then
 						ghoulKills.Value += 1
-						if ghoulKills.Value >= GameConfig.WardKillsToShift then
+						if ghoulKills.Value >= reqKills then
 							ghoulKills.Value = 0
 							wVal.Value = math.min(5.0, wVal.Value + 0.1)
 						end
