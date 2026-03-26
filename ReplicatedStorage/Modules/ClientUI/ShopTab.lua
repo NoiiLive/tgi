@@ -1,5 +1,7 @@
 -- @ScriptType: ModuleScript
+-- @ScriptType: ModuleScript
 local ShopTab = {}
+local SFXManager = require(game:GetService("Players").LocalPlayer:WaitForChild("PlayerScripts"):WaitForChild("SFXManager"))
 
 function ShopTab.Build(frame, GameConfig, ShopEvent)
 	local sCont = Instance.new("ScrollingFrame"); sCont.Name = "ShopCont"; sCont.Size = UDim2.new(0.9, 0, 0.8, 0); sCont.Position = UDim2.new(0.05, 0, 0.15, 0); sCont.BackgroundTransparency = 1; sCont.AutomaticCanvasSize = Enum.AutomaticSize.Y; sCont.CanvasSize = UDim2.new(0,0,0,0); sCont.ScrollBarThickness = 8; sCont.Parent = frame
@@ -34,7 +36,10 @@ function ShopTab.UpdateItems(sCont, shopData, GameConfig, ShopEvent)
 
 		local isFree = (index == 1)
 		local buyBtn = Instance.new("TextButton"); buyBtn.Size = UDim2.new(0.25, 0, 0.6, 0); buyBtn.Position = UDim2.new(0.72, 0, 0.2, 0); buyBtn.Text = isFree and "Claim (Free)" or "Buy (" .. GameConfig.QuinqueShopCost .. " Rep)"; buyBtn.Font = Enum.Font.GothamBold; buyBtn.TextSize = 16; buyBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 50); buyBtn.TextColor3 = Color3.fromRGB(255, 255, 255); buyBtn.Parent = row
-		buyBtn.MouseButton1Click:Connect(function() ShopEvent:FireServer("BuyItem", index) end)
+		buyBtn.MouseButton1Click:Connect(function() 
+			SFXManager.Play("Click")
+			ShopEvent:FireServer("BuyItem", index) 
+		end)
 	end
 end
 return ShopTab
