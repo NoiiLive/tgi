@@ -22,7 +22,14 @@ function CombatManager.Init(params)
 		for wardName, _ in pairs(GameConfig.Wards) do
 			local val = Instance.new("NumberValue")
 			val.Name = wardName
-			val.Value = math.random(10, 50) / 10
+
+			if wardName == "1st Ward" then
+				val.Value = 1.0
+			elseif wardName == "24th Ward" then
+				val.Value = 5.0
+			else
+				val.Value = math.random(10, 50) / 10
+			end
 
 			local ccgKills = Instance.new("IntValue")
 			ccgKills.Name = "CCGKills"
@@ -47,7 +54,7 @@ function CombatManager.Init(params)
 				if tickVal and os.time() >= tickVal.Value then
 					tickVal.Value = os.time() + GameConfig.WardPassiveTickRate
 					for _, wVal in ipairs(dynWards:GetChildren()) do
-						if wVal:IsA("NumberValue") then
+						if wVal:IsA("NumberValue") and wVal.Name ~= "1st Ward" then
 							wVal.Value = math.min(5.0, wVal.Value + 0.1)
 						end
 					end
@@ -185,7 +192,9 @@ function CombatManager.ProcessTurn(player, actionType)
 							ghoulKills.Value += 1
 							if ghoulKills.Value >= reqKills then
 								ghoulKills.Value = 0
-								wVal.Value = math.min(5.0, wVal.Value + 0.1)
+								if wVal.Name ~= "1st Ward" then
+									wVal.Value = math.min(5.0, wVal.Value + 0.1)
+								end
 							end
 						end
 					end
@@ -283,7 +292,9 @@ function CombatManager.ProcessTurn(player, actionType)
 						ghoulKills.Value += 1
 						if ghoulKills.Value >= reqKills then
 							ghoulKills.Value = 0
-							wVal.Value = math.min(5.0, wVal.Value + 0.1)
+							if wVal.Name ~= "1st Ward" then
+								wVal.Value = math.min(5.0, wVal.Value + 0.1)
+							end
 						end
 					end
 				elseif folder.Faction.Value == "GHOUL" then
@@ -292,7 +303,9 @@ function CombatManager.ProcessTurn(player, actionType)
 						ccgKills.Value += 1
 						if ccgKills.Value >= reqKills then
 							ccgKills.Value = 0
-							wVal.Value = math.max(1.0, wVal.Value - 0.1)
+							if wVal.Name ~= "1st Ward" then
+								wVal.Value = math.max(1.0, wVal.Value - 0.1)
+							end
 						end
 					end
 				end
@@ -313,7 +326,9 @@ function CombatManager.ProcessTurn(player, actionType)
 						ccgKills.Value += 1
 						if ccgKills.Value >= reqKills then
 							ccgKills.Value = 0
-							wVal.Value = math.max(1.0, wVal.Value - 0.1)
+							if wVal.Name ~= "1st Ward" then
+								wVal.Value = math.max(1.0, wVal.Value - 0.1)
+							end
 						end
 					end
 				elseif folder.Faction.Value == "GHOUL" then
@@ -322,7 +337,9 @@ function CombatManager.ProcessTurn(player, actionType)
 						ghoulKills.Value += 1
 						if ghoulKills.Value >= reqKills then
 							ghoulKills.Value = 0
-							wVal.Value = math.min(5.0, wVal.Value + 0.1)
+							if wVal.Name ~= "1st Ward" then
+								wVal.Value = math.min(5.0, wVal.Value + 0.1)
+							end
 						end
 					end
 				end
