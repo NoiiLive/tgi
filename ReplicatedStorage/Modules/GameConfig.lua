@@ -33,9 +33,30 @@ local GameConfig = {
 	},
 
 	Wards = {
-		["20th Ward"] = {Mult = 1, Name = "20th Ward (Low Risk)"},
-		["11th Ward"] = {Mult = 2.5, Name = "11th Ward (High Risk)"},
-		["24th Ward"] = {Mult = 5, Name = "24th Ward (Extreme Risk)"}
+		["1st Ward"] = {Name = "1st Ward (Chiyoda)"},
+		["2nd Ward"] = {Name = "2nd Ward (Chuo)"},
+		["3rd Ward"] = {Name = "3rd Ward (Minato)"},
+		["4th Ward"] = {Name = "4th Ward (Shinjuku)"},
+		["5th Ward"] = {Name = "5th Ward (Bunkyo)"},
+		["6th Ward"] = {Name = "6th Ward (Taito)"},
+		["7th Ward"] = {Name = "7th Ward (Sumida)"},
+		["8th Ward"] = {Name = "8th Ward (Koto)"},
+		["9th Ward"] = {Name = "9th Ward (Shinagawa)"},
+		["10th Ward"] = {Name = "10th Ward (Meguro)"},
+		["11th Ward"] = {Name = "11th Ward (Ota)"},
+		["12th Ward"] = {Name = "12th Ward (Setagaya)"},
+		["13th Ward"] = {Name = "13th Ward (Shibuya)"},
+		["14th Ward"] = {Name = "14th Ward (Nakano)"},
+		["15th Ward"] = {Name = "15th Ward (Suginami)"},
+		["16th Ward"] = {Name = "16th Ward (Toshima)"},
+		["17th Ward"] = {Name = "17th Ward (Kita)"},
+		["18th Ward"] = {Name = "18th Ward (Arakawa)"},
+		["19th Ward"] = {Name = "19th Ward (Itabashi)"},
+		["20th Ward"] = {Name = "20th Ward (Nerima)"},
+		["21st Ward"] = {Name = "21st Ward (Adachi)"},
+		["22nd Ward"] = {Name = "22nd Ward (Katsushika)"},
+		["23rd Ward"] = {Name = "23rd Ward (Edogawa)"},
+		["24th Ward"] = {Name = "24th Ward (Underground)"}
 	},
 
 	GhoulStatCost = 25, QuinqueShopCost = 50,
